@@ -2,7 +2,7 @@
 //   1. Fetch live APYs from DefiLlama
 //   2. Get evolved allocation from EvoFrame (0G compute)
 //   3. Trigger KeeperHub rebalance workflow
-//   4. Send Telegram notification
+//   4. Send Discord notification
 //
 // Usage: node keeperhub.mjs
 // For continuous running, use a cron job or KeeperHub schedule trigger.

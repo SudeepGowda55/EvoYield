@@ -7,12 +7,12 @@
 //   4. Trigger the current generation's KeeperHub workflow with the
 //      fresh allocation, OR fall back to a direct check-and-execute
 //      contract call when no workflow is registered yet
-//   5. Send a Telegram notification
+//   5. Send a Discord notification
 
-import { fetchApyData }                     from "./apy.mjs";
-import { triggerRebalance }                 from "./rebalance.mjs";
-import { sendTelegram, formatCycleMessage } from "./notify.mjs";
-import { synthesiseWorkflow }               from "./synth.mjs";
+import { fetchApyData }                    from "./apy.mjs";
+import { triggerRebalance }                from "./rebalance.mjs";
+import { sendDiscord, formatCycleMessage } from "./notify.mjs";
+import { synthesiseWorkflow }              from "./synth.mjs";
 import { snapshot, recordDeployment }       from "./registry.mjs";
 import { initAgent, evaluate, getActiveSkill } from "../agent/instance.mjs";
 
@@ -68,8 +68,11 @@ export async function runCycle({ allowSynth = true, agentName = "EvoYield-v1" } 
 
   // 6. Notify
   const message = formatCycleMessage(marketData, result, khResult);
-  await sendTelegram(message);
-  if (message) console.log("\n📲 Telegram notification sent.");
+  if (message) {
+    const out = await sendDiscord(message);
+    if (out?.sent)         console.log("\n📲 Discord notification sent.");
+    else if (out?.skipped) console.log("\n📲 Discord webhook not configured — skipping.");
+  }
 
   console.log("\n✅ Cycle complete.\n");
   return { marketData, result, khResult, synth: synthInfo };

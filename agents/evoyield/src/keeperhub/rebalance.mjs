@@ -13,7 +13,7 @@
 //   4. Withdraw from over-allocated protocols
 //   5. Approve + Deposit into under-allocated protocols
 //   6. Confirm updated balances
-//   7. Send Telegram / Discord summary
+//   7. Send Discord summary
 //
 //  Set KH_REBALANCE_WORKFLOW_ID in .env after creating the workflow.
 
