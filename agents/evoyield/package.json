@@ -1,0 +1,18 @@
+{
+  "name": "evoyield-agent",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "EvoYield — Self-evolving DeFi yield optimizer powered by EvoFrame (0G) + KeeperHub",
+  "scripts": {
+    "start": "node server.mjs",
+    "agent": "node agent.mjs",
+    "keeperhub": "node keeperhub.mjs"
+  },
+  "dependencies": {
+    "@evoframe/0g-adapter": "*",
+    "@evoframe/core": "*",
+    "@evoframe/skill-registry": "*",
+    "dotenv": "^17.4.2",
+    "express": "^4.21.2"
+  }
+}

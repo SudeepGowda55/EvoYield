@@ -1,0 +1,28 @@
+{
+  "name": "@evoframe/cli",
+  "version": "0.1.0",
+  "bin": {
+    "evo": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --banner.js '#!/usr/bin/env node'",
+    "dev": "tsup src/index.ts --format esm --dts --watch"
+  },
+  "dependencies": {
+    "@evoframe/core": "*",
+    "@evoframe/0g-adapter": "*",
+    "@evoframe/skill-registry": "*",
+    "commander": "^12.0.0",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.0",
+    "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "tsup": "*",
+    "typescript": "*",
+    "@types/node": "*",
+    "@types/prompts": "^2.4.9"
+  }
+}

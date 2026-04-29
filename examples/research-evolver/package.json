@@ -1,0 +1,23 @@
+{
+  "name": "research-evolver",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "build": "tsup src/index.ts --format esm"
+  },
+  "dependencies": {
+    "@evoframe/0g-adapter": "*",
+    "@evoframe/core": "*",
+    "@evoframe/skill-registry": "*",
+    "chalk": "^5.6.2",
+    "dotenv": "^17.4.2",
+    "ora": "^9.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "*",
+    "tsup": "*",
+    "tsx": "^4.0.0",
+    "typescript": "*"
+  }
+}
