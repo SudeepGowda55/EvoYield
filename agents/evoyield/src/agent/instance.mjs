@@ -86,3 +86,23 @@ export function getSkillInfo() {
     ? { name: skill.name, generation: skill.generation, fitnessScore: skill.fitnessScore }
     : null;
 }
+
+/** Returns the underlying EvoAgent so KeeperHub modules can subscribe to engine events. */
+export function getAgent() {
+  return agent;
+}
+
+/** Returns the current active SkillGenome, or null if the agent is not ready. */
+export function getActiveSkill() {
+  return agent?.listSkills().find((s) => s.name === "yield-allocator") ?? null;
+}
+
+/**
+ * Force the agent to re-evaluate fitness and (if needed) trigger a new
+ * evolution cycle. Used by the KeeperHub-callable /regenerate route when an
+ * onchain workflow detects a sustained underperformance.
+ */
+export async function forceRegenerate(reason = "external regeneration trigger") {
+  if (!agent) throw new Error("Agent not initialized");
+  return agent.forceEvolve("yield-allocator", reason);
+}

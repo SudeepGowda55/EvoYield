@@ -17,30 +17,51 @@
 //
 //  Set KH_REBALANCE_WORKFLOW_ID in .env after creating the workflow.
 
-import { khFetch } from "./client.mjs";
+import { kh, KeeperHubError } from "./client.mjs";
 
-export async function triggerRebalance({ allocation, marketData, generation, fitnessScore }) {
-  const workflowId = process.env.KH_REBALANCE_WORKFLOW_ID;
+const PATHS = {
+  webhook: (id) => `/workflows/${encodeURIComponent(id)}/webhook`,
+  execute: (id) => `/workflows/${encodeURIComponent(id)}/execute`,
+};
+
+export async function triggerRebalance({
+  allocation,
+  marketData,
+  generation,
+  fitnessScore,
+  workflowId,                    // optional — overrides the env var (used by auto-synth)
+  via = "webhook",               // "webhook" or "execute"
+} = {}) {
+  const id = workflowId ?? process.env.KH_REBALANCE_WORKFLOW_ID;
 
   const payload = {
-    allocation,    // { aave: %, morpho: %, yearn: %, sky: % }
-    marketData,    // { aave_apy, morpho_apy, yearn_apy, sky_apy }
-    generation,    // which evolution generation produced this strategy
+    allocation,
+    marketData,
+    generation,
     fitnessScore,
     timestamp: new Date().toISOString(),
   };
 
-  if (!workflowId || workflowId === "wf_your_workflow_id_here") {
-    console.log("\n⚠️  KH_REBALANCE_WORKFLOW_ID not set — logging payload only:");
+  if (!id || id === "wf_your_workflow_id_here") {
+    console.log("\n⚠️  No KeeperHub workflow registered — logging payload only:");
     console.log(JSON.stringify(payload, null, 2).split("\n").map((l) => "   " + l).join("\n"));
     return { triggered: false, payload };
   }
 
-  const result = await khFetch(`/workflows/${workflowId}/webhook`, {
-    method: "POST",
-    body:   payload,
-  });
-
-  console.log(`\n⚡ KeeperHub workflow triggered (${workflowId})`);
-  return { triggered: true, result };
+  const path = via === "execute" ? PATHS.execute(id) : PATHS.webhook(id);
+  try {
+    const result = await kh.post(path, via === "execute" ? { input: payload } : payload, {
+      idempotencyKey: `trigger:${id}:${generation}:${Date.now()}`,
+    });
+    console.log(`\n⚡ KeeperHub workflow triggered (${id})`);
+    return { triggered: true, workflowId: id, result };
+  } catch (err) {
+    if (err instanceof KeeperHubError && err.status === 404 && via === "webhook") {
+      // Workflow exists but doesn't have a webhook trigger — fall back to execute.
+      const result = await kh.post(PATHS.execute(id), { input: payload });
+      console.log(`\n⚡ KeeperHub workflow executed (${id}, fallback to /execute)`);
+      return { triggered: true, workflowId: id, result };
+    }
+    throw err;
+  }
 }

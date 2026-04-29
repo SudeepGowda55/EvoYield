@@ -4,9 +4,10 @@
   "type": "module",
   "description": "EvoYield — Self-evolving DeFi yield optimizer powered by EvoFrame (0G) + KeeperHub",
   "scripts": {
-    "start": "node server.mjs",
-    "agent": "node agent.mjs",
-    "keeperhub": "node keeperhub.mjs"
+    "start":     "node server.mjs",
+    "agent":     "node agent.mjs",
+    "keeperhub": "node keeperhub.mjs",
+    "synth":     "node genome-to-keeper.mjs"
   },
   "dependencies": {
     "@evoframe/0g-adapter": "*",
