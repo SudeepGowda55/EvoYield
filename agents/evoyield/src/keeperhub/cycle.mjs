@@ -14,6 +14,7 @@ import { triggerRebalance }                from "./rebalance.mjs";
 import { sendDiscord, formatCycleMessage } from "./notify.mjs";
 import { synthesiseWorkflow }              from "./synth.mjs";
 import { snapshot, recordDeployment }       from "./registry.mjs";
+import { KeeperHubError }                  from "./client.mjs";
 import { initAgent, evaluate, getActiveSkill } from "../agent/instance.mjs";
 
 export async function runCycle({ allowSynth = true, agentName = "EvoYield-v1" } = {}) {
@@ -41,11 +42,15 @@ export async function runCycle({ allowSynth = true, agentName = "EvoYield-v1" } 
     if (skill) {
       try {
         synthInfo = await synthesiseWorkflow({ skill, agent: agentName });
-        console.log(
-          synthInfo.reused
-            ? `\n♻️  Workflow already deployed for gen-${skill.generation}: ${synthInfo.workflowId}`
-            : `\n🛠  Synthesised new workflow ${synthInfo.workflowId} for gen-${skill.generation}`,
-        );
+        if (synthInfo.skipped) {
+          console.warn(`\n⚠️  Auto-synth skipped (${synthInfo.mode} mode): ${synthInfo.reason}`);
+        } else {
+          console.log(
+            synthInfo.reused
+              ? `\n♻️  Workflow already deployed for gen-${skill.generation}: ${synthInfo.workflowId}`
+              : `\n🛠  Synthesised new workflow ${synthInfo.workflowId} for gen-${skill.generation}`,
+          );
+        }
       } catch (err) {
         console.warn(`[cycle] auto-synth skipped: ${err.message ?? err}`);
       }
@@ -56,15 +61,39 @@ export async function runCycle({ allowSynth = true, agentName = "EvoYield-v1" } 
   //    synthesised workflow id we use that; otherwise fall back to the
   //    legacy KH_REBALANCE_WORKFLOW_ID env var (manual setup).
   const reg     = await snapshot();
-  const overrideId = synthInfo?.workflowId ?? reg.current?.workflowId;
+  const envWorkflowId = (process.env.KH_REBALANCE_WORKFLOW_ID ?? "").trim() || null;
+  const overrideId = envWorkflowId ?? synthInfo?.workflowId ?? reg.current?.workflowId;
 
-  const khResult = await triggerRebalance({
-    allocation:   result.allocation,
-    marketData,
-    generation:   result.generation,
-    fitnessScore: result.fitnessScore,
-    workflowId:   overrideId,
-  });
+  let khResult;
+  try {
+    khResult = await triggerRebalance({
+      allocation:   result.allocation,
+      marketData,
+      generation:   result.generation,
+      fitnessScore: result.fitnessScore,
+      workflowId:   overrideId,
+    });
+    if (!khResult?.triggered) {
+      console.warn(`\n⚠️  KeeperHub trigger did not run: ${khResult?.error ?? "unknown reason"}`);
+    }
+  } catch (err) {
+    if (err instanceof KeeperHubError && err.status === 410) {
+      const workflowId = overrideId ?? process.env.KH_REBALANCE_WORKFLOW_ID ?? null;
+      const detail = err.body?.error ?? "Workflow is disabled";
+      console.warn(
+        `\n⚠️  KeeperHub workflow is disabled (${workflowId ?? "unknown"}). ` +
+        `Enable/Publish it in KeeperHub and re-run. (${detail})`,
+      );
+      khResult = {
+        triggered: false,
+        workflowId,
+        error: detail,
+        disabled: true,
+      };
+    } else {
+      throw err;
+    }
+  }
 
   // 6. Notify
   const message = formatCycleMessage(marketData, result, khResult);

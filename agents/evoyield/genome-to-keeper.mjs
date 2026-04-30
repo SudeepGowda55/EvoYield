@@ -55,11 +55,16 @@ if (skill && process.env.EVOYIELD_PUBLIC_URL) {
   banner(`🛠   Synthesising workflow for ${skill.name} gen-${skill.generation}`);
   try {
     const out = await synthesiseWorkflow({ skill, agent: AGENT_NAME });
-    console.log(
-      out.reused
-        ? `   ↳ already deployed: ${out.workflowId}`
-        : `   ↳ deployed:        ${out.workflowId}`,
-    );
+    if (out.skipped) {
+      console.warn(`   ↳ synth skipped (${out.mode} mode)`);
+      console.warn(`     ${out.reason}`);
+    } else {
+      console.log(
+        out.reused
+          ? `   ↳ already deployed: ${out.workflowId}`
+          : `   ↳ deployed:        ${out.workflowId}`,
+      );
+    }
   } catch (err) {
     console.error(`   ✗ synth failed: ${err.message ?? err}`);
     if (err.body) console.error(`     body: ${JSON.stringify(err.body)}`);

@@ -30,6 +30,37 @@ const PATHS = {
   deleteWorkflow: (id) => `/workflows/${encodeURIComponent(id)}`,
 };
 
+async function toManualMode({ skill, agent, causeMessage }) {
+  const manualWorkflowId = (process.env.KH_REBALANCE_WORKFLOW_ID ?? "").trim() || null;
+  let current = null;
+
+  if (manualWorkflowId) {
+    current = await recordDeployment({
+      skillId: skill.id,
+      generation: skill.generation,
+      workflowId: manualWorkflowId,
+      agent,
+    });
+  }
+
+  const nextStep = manualWorkflowId
+    ? "Linked KH_REBALANCE_WORKFLOW_ID from .env into the local registry for this generation."
+    : "Set KH_REBALANCE_WORKFLOW_ID in .env to run rebalances via a manually created workflow.";
+
+  return {
+    workflowId: manualWorkflowId,
+    reused: Boolean(manualWorkflowId),
+    skipped: true,
+    mode: "manual",
+    skill,
+    current,
+    reason:
+      "KeeperHub AI workflow synthesis endpoint is unavailable (404). " +
+      `Tried REST path ${PATHS.aiGenerate}. ${nextStep}` +
+      (causeMessage ? ` Cause: ${causeMessage}` : ""),
+  };
+}
+
 // ── Prompt construction ───────────────────────────────────────────────────
 function buildSynthesisPrompt({ skill, agent, evaluateUrl, regenerateUrl, allocationTargets }) {
   const targets = allocationTargets
@@ -103,7 +134,15 @@ export async function synthesiseWorkflow({
   });
 
   // Step A — ask KeeperHub to generate the workflow JSON from the prompt.
-  const aiResp = await kh.post(PATHS.aiGenerate, { prompt });
+  let aiResp;
+  try {
+    aiResp = await kh.post(PATHS.aiGenerate, { prompt });
+  } catch (err) {
+    if (err instanceof KeeperHubError && err.status === 404) {
+      return toManualMode({ skill, agent, causeMessage: err.message });
+    }
+    throw err;
+  }
   const generated = aiResp.workflow ?? aiResp.result?.workflow ?? aiResp;
   if (!generated || !Array.isArray(generated.nodes)) {
     throw new KeeperHubError({
@@ -192,11 +231,15 @@ export function attachAutoSynth(agentInstance, { agentName, ...opts } = {}) {
         `Synthesising matching KeeperHub workflow...`,
       );
       const out = await synthesiseWorkflow({ skill: promoted, agent: agentName, ...opts });
-      console.log(
-        out.reused
-          ? `   ↳ already deployed as ${out.workflowId} (reused)`
-          : `   ↳ deployed as ${out.workflowId}`,
-      );
+      if (out.skipped) {
+        console.warn(`   ↳ synth skipped (${out.mode} mode): ${out.reason}`);
+      } else {
+        console.log(
+          out.reused
+            ? `   ↳ already deployed as ${out.workflowId} (reused)`
+            : `   ↳ deployed as ${out.workflowId}`,
+        );
+      }
     } catch (err) {
       console.error(`[synth] auto-synth failed: ${err.message ?? err}`);
     }

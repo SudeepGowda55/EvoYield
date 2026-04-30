@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "agent": "EvoYield-v1",
+  "current": {
+    "skillId": "d3968dcb-1c93-4927-8b06-34df0f459b6c",
+    "generation": 1,
+    "workflowId": "gytp5r8igu4d994gjy8zb",
+    "deployedAt": "2026-04-30T12:32:39.924Z"
+  },
+  "history": [
+    {
+      "skillId": "d3968dcb-1c93-4927-8b06-34df0f459b6c",
+      "generation": 1,
+      "workflowId": "gytp5r8igu4d994gjy8zb",
+      "deployedAt": "2026-04-30T12:32:39.924Z"
+    }
+  ],
+  "lastSyncedAt": "2026-04-30T12:32:39.925Z"
+}
