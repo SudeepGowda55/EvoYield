@@ -9,8 +9,8 @@ import { kh, KeeperHubError } from "./client.mjs";
 const PATHS = {
   checkAndExecute:  process.env.KH_PATH_CHECK_EXEC      ?? "/executions/check-and-execute",
   contractCall:     process.env.KH_PATH_CONTRACT_CALL   ?? "/executions/contract-call",
-  status:           (id) => `/executions/${encodeURIComponent(id)}`,
-  logs:             (id) => `/executions/${encodeURIComponent(id)}/logs`,
+  status:           (id) => `/workflows/executions/${encodeURIComponent(id)}/status`,
+  logs:             (id) => `/workflows/executions/${encodeURIComponent(id)}/logs`,
 };
 
 /**

@@ -63,6 +63,9 @@ export async function runCycle({ allowSynth = true, agentName = "EvoYield-v1" } 
   const reg     = await snapshot();
   const envWorkflowId = (process.env.KH_REBALANCE_WORKFLOW_ID ?? "").trim() || null;
   const overrideId = envWorkflowId ?? synthInfo?.workflowId ?? reg.current?.workflowId;
+  if (overrideId) {
+    console.log(`\n🚀 Triggering KeeperHub workflow ${overrideId}...`);
+  }
 
   let khResult;
   try {

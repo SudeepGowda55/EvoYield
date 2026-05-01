@@ -18,11 +18,107 @@
 //  Set KH_REBALANCE_WORKFLOW_ID in .env after creating the workflow.
 
 import { kh, KeeperHubError } from "./client.mjs";
+import { getExecutionLogs, waitForExecution } from "./checkAndExecute.mjs";
 
 const PATHS = {
   webhook: (id) => `/workflows/${encodeURIComponent(id)}/webhook`,
-  execute: (id) => `/workflows/${encodeURIComponent(id)}/execute`,
+  execute: (id) => `/workflow/${encodeURIComponent(id)}/execute`,
 };
+
+function executionIdFrom(result) {
+  return result?.execution_id
+    ?? result?.executionId
+    ?? result?.id
+    ?? result?.execution?.id
+    ?? result?.run_id
+    ?? result?.runId
+    ?? null;
+}
+
+function workflowStatusFrom(result) {
+  return result?.status
+    ?? result?.execution?.status
+    ?? result?.state
+    ?? null;
+}
+
+function printJsonBlock(label, value, indent = "      ") {
+  if (value == null) return;
+  const text = JSON.stringify(value, null, 2)
+    .split("\n")
+    .map((line) => `${indent}${line}`)
+    .join("\n");
+  console.log(`${indent}${label}:`);
+  console.log(text);
+}
+
+function printExecutionLogs(logResp) {
+  const execution = logResp?.execution;
+  const logs = Array.isArray(logResp?.logs) ? logResp.logs : [];
+
+  if (execution?.output !== undefined) {
+    printJsonBlock("Workflow output", execution.output, "   ");
+  }
+
+  if (logs.length) {
+    console.log("   ↳ node outputs:");
+    for (const log of logs) {
+      const duration = log.duration != null ? ` (${log.duration}ms)` : "";
+      console.log(`      • ${log.nodeName ?? log.nodeId}: ${log.status}${duration}`);
+      if (log.output !== undefined) {
+        printJsonBlock("output", log.output, "        ");
+      }
+      if (log.error) {
+        printJsonBlock("error", log.error, "        ");
+      }
+    }
+  }
+}
+
+async function confirmExecution(result, {
+  workflowId,
+  source,
+  wait = false,
+  timeoutMs = Number(process.env.KH_WORKFLOW_WAIT_MS ?? 45_000),
+} = {}) {
+  const executionId = executionIdFrom(result);
+  const status = workflowStatusFrom(result);
+  const out = {
+    triggered: true,
+    workflowId,
+    executionId,
+    status,
+    source,
+    result,
+    triggeredAt: new Date().toISOString(),
+  };
+
+  const statusText = status ? `, status=${status}` : "";
+  const executionText = executionId ? `, execution=${executionId}` : "";
+  console.log(`\n⚡ KeeperHub workflow triggered (${workflowId}${executionText}${statusText})`);
+
+  if (wait && executionId) {
+    try {
+      const final = await waitForExecution(executionId, { timeoutMs });
+      out.finalStatus = workflowStatusFrom(final) ?? final?.status ?? "unknown";
+      out.finalResult = final;
+      console.log(`   ↳ execution ${executionId} ${out.finalStatus}`);
+      const logs = await getExecutionLogs(executionId);
+      out.logs = logs;
+      printExecutionLogs(logs);
+    } catch (err) {
+      out.confirmationError = err.message ?? String(err);
+      console.warn(`   ↳ execution confirmation unavailable: ${out.confirmationError}`);
+    }
+  }
+
+  if (!executionId) {
+    const keys = result && typeof result === "object" ? Object.keys(result).join(", ") : typeof result;
+    console.warn(`   ↳ KeeperHub accepted the trigger but did not return an execution id (${keys || "empty response"})`);
+  }
+
+  return out;
+}
 
 export async function triggerRebalance({
   allocation,
@@ -31,6 +127,7 @@ export async function triggerRebalance({
   fitnessScore,
   workflowId,                    // optional — overrides the env var (used by auto-synth)
   via = "webhook",               // "webhook" or "execute"
+  wait = (process.env.KH_WAIT_FOR_WORKFLOW ?? "").toLowerCase() === "true",
 } = {}) {
   const id = workflowId ?? process.env.KH_REBALANCE_WORKFLOW_ID;
   const directWebhookUrl = (process.env.KH_WEBHOOK_URL ?? "").trim();
@@ -50,7 +147,8 @@ export async function triggerRebalance({
   }
 
   // Preferred path for KeeperHub webhook-trigger workflows that provide
-  // a direct signed URL in the UI (no org API key needed).
+  // a direct signed URL in the UI (no org API key needed). If that URL has
+  // gone stale, fall through to the authenticated workflow API below.
   if (directWebhookUrl) {
     const res = await fetch(directWebhookUrl, {
       method: "POST",
@@ -65,15 +163,12 @@ export async function triggerRebalance({
     let json;
     try { json = text ? JSON.parse(text) : {}; } catch { json = { raw: text }; }
     if (res.ok) {
-      console.log(`\n⚡ KeeperHub workflow triggered (direct webhook URL)`);
-      return { triggered: true, workflowId: id, result: json };
+      return confirmExecution(json, { workflowId: id, source: "direct-webhook-url", wait });
     }
-    return {
-      triggered: false,
-      workflowId: id,
-      unavailable: true,
-      error: json?.error ?? `Direct webhook call failed (${res.status})`,
-    };
+    console.warn(
+      `\n⚠️  Direct KeeperHub webhook URL failed (${res.status}); ` +
+      `falling back to /workflows/${id}/webhook...`,
+    );
   }
 
   const path = via === "execute" ? PATHS.execute(id) : PATHS.webhook(id);
@@ -81,19 +176,39 @@ export async function triggerRebalance({
     const result = await kh.post(path, via === "execute" ? { input: payload } : payload, {
       idempotencyKey: `trigger:${id}:${generation}:${Date.now()}`,
     });
-    console.log(`\n⚡ KeeperHub workflow triggered (${id})`);
-    return { triggered: true, workflowId: id, result };
+    return confirmExecution(result, { workflowId: id, source: via, wait });
   } catch (err) {
     if (err instanceof KeeperHubError && via === "webhook" && err.status === 401) {
       const msg = String(err.body?.error ?? "").toLowerCase();
       const webhookKey = (process.env.KH_WEBHOOK_KEY ?? "").trim();
-      if (msg.includes("invalid api key format") && webhookKey.startsWith("wfb_")) {
+      if (msg.includes("invalid api key format")) {
+        try {
+          const result = await kh.post(PATHS.execute(id), { input: payload }, {
+            idempotencyKey: `execute:${id}:${generation}:${Date.now()}`,
+          });
+          return confirmExecution(result, { workflowId: id, source: "execute-auth-fallback", wait });
+        } catch (execErr) {
+          if (!(execErr instanceof KeeperHubError) || execErr.status !== 404) {
+            throw execErr;
+          }
+        }
+      }
+      if (msg.includes("invalid api key format") && webhookKey.startsWith("kh_")) {
+        return {
+          triggered: false,
+          workflowId: id,
+          authFailed: true,
+          error: "KH_WEBHOOK_KEY is an organization key (kh_...). KeeperHub webhook triggers require a user webhook key (wfb_...).",
+        };
+      }
+      if (msg.includes("invalid api key format") && webhookKey) {
         const base = (process.env.KEEPERHUB_API_URL ?? "https://app.keeperhub.com/api").replace(/\/+$/, "");
         const res = await fetch(`${base}${PATHS.webhook(id)}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Accept": "application/json",
+            "Authorization": `Bearer ${webhookKey}`,
             "X-API-Key": webhookKey,
             "User-Agent": "evoyield-keeperhub/1.0",
           },
@@ -103,8 +218,7 @@ export async function triggerRebalance({
         let json;
         try { json = text ? JSON.parse(text) : {}; } catch { json = { raw: text }; }
         if (res.ok) {
-          console.log(`\n⚡ KeeperHub workflow triggered (${id}, webhook-key auth)`);
-          return { triggered: true, workflowId: id, result: json };
+          return confirmExecution(json, { workflowId: id, source: "webhook-key", wait });
         }
         return {
           triggered: false,
@@ -113,6 +227,12 @@ export async function triggerRebalance({
           error: json?.error ?? `Webhook key auth failed (${res.status})`,
         };
       }
+      return {
+        triggered: false,
+        workflowId: id,
+        authFailed: true,
+        error: err.body?.error ?? "KeeperHub rejected the workflow trigger API key.",
+      };
     }
 
     if (err instanceof KeeperHubError && via === "webhook" && err.status === 410) {
@@ -133,8 +253,7 @@ export async function triggerRebalance({
       // non-fatal response so cycle logs can guide manual configuration.
       try {
         const result = await kh.post(PATHS.execute(id), { input: payload });
-        console.log(`\n⚡ KeeperHub workflow executed (${id}, fallback to /execute)`);
-        return { triggered: true, workflowId: id, result };
+        return confirmExecution(result, { workflowId: id, source: "execute-fallback", wait });
       } catch (execErr) {
         if (execErr instanceof KeeperHubError && execErr.status === 404) {
           return {

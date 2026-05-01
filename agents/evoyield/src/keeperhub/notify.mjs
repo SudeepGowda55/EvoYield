@@ -101,11 +101,16 @@ export function formatCycleMessage(marketData, result, khResult) {
 
   let khStatus;
   if (khResult?.triggered) {
+    const execution = khResult.executionId ? `\nExecution \`${khResult.executionId}\`` : "";
+    const status = khResult.finalStatus ?? khResult.status;
+    const statusText = status ? `\nStatus \`${status}\`` : "";
     khStatus = khResult.workflowId
-      ? `:zap: Workflow \`${khResult.workflowId}\` triggered`
-      : `:zap: Workflow triggered`;
+      ? `:zap: Workflow \`${khResult.workflowId}\` triggered${execution}${statusText}`
+      : `:zap: Workflow triggered${execution}${statusText}`;
   } else {
-    khStatus = `:hourglass_flowing_sand: No workflow registered yet`;
+    khStatus = khResult?.error
+      ? `:warning: Workflow not triggered: ${khResult.error}`
+      : `:hourglass_flowing_sand: No workflow registered yet`;
   }
 
   return {
