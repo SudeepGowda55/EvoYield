@@ -62,7 +62,7 @@ export async function runCycle({ allowSynth = true, agentName = "EvoYield-v1" } 
   //    legacy KH_REBALANCE_WORKFLOW_ID env var (manual setup).
   const reg     = await snapshot();
   const envWorkflowId = (process.env.KH_REBALANCE_WORKFLOW_ID ?? "").trim() || null;
-  const overrideId = envWorkflowId ?? synthInfo?.workflowId ?? reg.current?.workflowId;
+  const overrideId = synthInfo?.workflowId ?? reg.current?.workflowId ?? envWorkflowId;
   if (overrideId) {
     console.log(`\n🚀 Triggering KeeperHub workflow ${overrideId}...`);
   }
@@ -76,6 +76,31 @@ export async function runCycle({ allowSynth = true, agentName = "EvoYield-v1" } 
       fitnessScore: result.fitnessScore,
       workflowId:   overrideId,
     });
+    if (!khResult?.triggered && allowSynth && /(permission|forbidden|disabled)/i.test(khResult?.error ?? "")) {
+      const skill = getActiveSkill();
+      if (skill) {
+        console.warn("\n⚠️  Current KeeperHub workflow is not runnable; creating an owned enabled workflow...");
+        const forced = await synthesiseWorkflow({
+          skill,
+          agent: agentName,
+          force: true,
+          cleanupRetired: false,
+        });
+        if (forced.skipped) {
+          console.warn(`\n⚠️  Could not auto-create KeeperHub workflow: ${forced.reason}`);
+        } else {
+          console.log(`\n🛠  Created owned KeeperHub workflow ${forced.workflowId}; retrying trigger...`);
+          synthInfo = forced;
+          khResult = await triggerRebalance({
+            allocation:   result.allocation,
+            marketData,
+            generation:   result.generation,
+            fitnessScore: result.fitnessScore,
+            workflowId:   forced.workflowId,
+          });
+        }
+      }
+    }
     if (!khResult?.triggered) {
       console.warn(`\n⚠️  KeeperHub trigger did not run: ${khResult?.error ?? "unknown reason"}`);
     }

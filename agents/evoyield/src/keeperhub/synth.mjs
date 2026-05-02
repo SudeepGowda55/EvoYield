@@ -25,7 +25,7 @@ import {
 // FEEDBACK_KEEPERHUB.md for details.
 const PATHS = {
   aiGenerate:    process.env.KH_PATH_AI_GENERATE   ?? "/ai/generate-workflow",
-  createWorkflow: process.env.KH_PATH_CREATE_WORKFLOW ?? "/workflows",
+  createWorkflow: process.env.KH_PATH_CREATE_WORKFLOW ?? "/workflows/create",
   updateWorkflow: (id) => `/workflows/${encodeURIComponent(id)}`,
   deleteWorkflow: (id) => `/workflows/${encodeURIComponent(id)}`,
 };
@@ -94,6 +94,87 @@ function buildSynthesisPrompt({ skill, agent, evaluateUrl, regenerateUrl, alloca
   ].join("\n");
 }
 
+function buildFallbackWorkflow({ skill, agent }) {
+  const code = `
+const payload = {{Webhook.data}};
+const allocation = payload?.allocation ?? {};
+const marketData = payload?.marketData ?? {};
+const protocols = ["aave", "morpho", "yearn", "sky"];
+const target = Object.fromEntries(protocols.map((name) => [name, Number(allocation[name] ?? 0)]));
+const total = protocols.reduce((sum, name) => sum + target[name], 0);
+if (Math.abs(total - 100) > 1) throw new Error("Target allocation must sum to 100");
+
+const rebalancePlan = protocols.map((name) => ({
+  protocol: name,
+  targetPct: target[name],
+  marketApy: Number(marketData[\`\${name}_apy\`] ?? 0),
+  action: target[name] > 0 ? "allocate" : "withdraw",
+  note:
+    name === "aave" ? "Aave V3 supply/withdraw leg" :
+    name === "morpho" ? "Morpho supply/withdraw leg" :
+    name === "yearn" ? "Yearn V3 vault deposit/withdraw leg" :
+    "Sky savings deposit/withdraw leg",
+}));
+
+return {
+  success: true,
+  agent: ${JSON.stringify(agent)},
+  generation: payload?.generation ?? ${JSON.stringify(skill.generation)},
+  fitnessScore: payload?.fitnessScore ?? ${JSON.stringify(skill.fitnessScore)},
+  target,
+  rebalancePlan,
+  message: "EvoYield rebalance plan built from webhook payload. Replace this planning node with protocol write nodes once the KeeperHub wallet is connected.",
+};
+`.trim();
+
+  return {
+    name: `evoyield-${skill.name}-gen${skill.generation}-owned`,
+    description:
+      `Owned EvoYield rebalance workflow for gen ${skill.generation}. ` +
+      "Receives target allocation and builds a four-protocol distribution plan.",
+    nodes: [
+      {
+        id: "webhook-trigger",
+        type: "trigger",
+        position: { x: 0, y: 0 },
+        data: {
+          type: "trigger",
+          label: "Webhook",
+          description: "Receives EvoYield allocation payload",
+          config: {
+            triggerType: "Webhook",
+            webhookSchema: "[]",
+            webhookMockRequest: "",
+          },
+        },
+      },
+      {
+        id: "build-rebalance-plan",
+        type: "action",
+        position: { x: 320, y: 0 },
+        data: {
+          type: "action",
+          label: "Build Rebalance Plan",
+          description: "Calculates target distribution across Aave, Morpho, Yearn, and Sky",
+          config: {
+            actionType: "code/run-code",
+            code,
+            timeout: 60,
+          },
+        },
+      },
+    ],
+    edges: [
+      {
+        id: "webhook-to-plan",
+        type: "animated",
+        source: "webhook-trigger",
+        target: "build-rebalance-plan",
+      },
+    ],
+  };
+}
+
 // ── Defaults — caller can override by passing options to synthesise ───────
 const DEFAULT_TARGETS = [
   { name: "aave",   chain: "ethereum", protocol: "Aave V3",     token: "USDC", contract: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2" },
@@ -111,6 +192,7 @@ export async function synthesiseWorkflow({
   projectId      = process.env.KH_PROJECT_ID ?? null,
   tagId          = process.env.KH_TAG_ID ?? null,
   cleanupRetired = true,
+  force          = false,
 } = {}) {
   if (!skill) throw new TypeError("synthesiseWorkflow: skill is required");
   if (!evaluateUrl) {
@@ -122,7 +204,7 @@ export async function synthesiseWorkflow({
 
   // Skip re-synth if we already have a workflow for this generation.
   const existing = await findWorkflowFor(skill.id, skill.generation);
-  if (existing) {
+  if (existing && !force) {
     return { workflowId: existing, reused: true, skill };
   }
 
@@ -135,15 +217,24 @@ export async function synthesiseWorkflow({
 
   // Step A — ask KeeperHub to generate the workflow JSON from the prompt.
   let aiResp;
+  let generated;
   try {
     aiResp = await kh.post(PATHS.aiGenerate, { prompt });
   } catch (err) {
     if (err instanceof KeeperHubError && err.status === 404) {
+      if (force) {
+        console.warn(
+          `\n⚠️  KeeperHub AI synthesis endpoint unavailable; deploying deterministic EvoYield workflow fallback.`,
+        );
+        generated = buildFallbackWorkflow({ skill, agent });
+      } else {
       return toManualMode({ skill, agent, causeMessage: err.message });
+      }
+    } else {
+      throw err;
     }
-    throw err;
   }
-  const generated = aiResp.workflow ?? aiResp.result?.workflow ?? aiResp;
+  generated = generated ?? aiResp.workflow ?? aiResp.result?.workflow ?? aiResp;
   if (!generated || !Array.isArray(generated.nodes)) {
     throw new KeeperHubError({
       status:    502,
@@ -155,22 +246,18 @@ export async function synthesiseWorkflow({
   }
 
   // Step B — deploy it.
-  const idempotencyKey = `synth:${skill.id}:gen${skill.generation}`;
+  const idempotencyKey = force
+    ? `synth:${skill.id}:gen${skill.generation}:${Date.now()}`
+    : `synth:${skill.id}:gen${skill.generation}`;
   const created = await kh.post(
     PATHS.createWorkflow,
     {
       name:        generated.name        ?? `evoyield-${skill.name}-gen${skill.generation}`,
       description: generated.description ?? `Auto-synthesised from SkillGenome ${skill.id} (gen ${skill.generation})`,
-      project_id:  projectId,
-      tag_id:      tagId,
+      projectId,
       nodes:       generated.nodes,
       edges:       generated.edges ?? [],
-      metadata: {
-        evoframe_skill_id:    skill.id,
-        evoframe_generation:  skill.generation,
-        evoframe_fitness:     skill.fitnessScore,
-        evoframe_agent:       agent,
-      },
+      enabled:     true,
     },
     { idempotencyKey },
   );
@@ -185,6 +272,17 @@ export async function synthesiseWorkflow({
       message:   "create_workflow did not return an id",
     });
   }
+
+  await kh.patch(PATHS.updateWorkflow(workflowId), {
+    name:        generated.name        ?? `evoyield-${skill.name}-gen${skill.generation}`,
+    description: generated.description ?? `Auto-synthesised from SkillGenome ${skill.id} (gen ${skill.generation})`,
+    projectId,
+    tagId,
+    nodes:       generated.nodes,
+    edges:       generated.edges ?? [],
+    visibility:  "private",
+    enabled:     true,
+  });
 
   // Step C — record the deployment in the local registry, retiring the previous gen.
   const current = await recordDeployment({

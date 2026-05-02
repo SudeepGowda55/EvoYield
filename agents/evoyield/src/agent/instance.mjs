@@ -15,6 +15,41 @@ const ROOT      = resolve(__dirname, "../../");
 let agent      = null;
 let _ready     = false;
 
+function rankedAllocation(marketData) {
+  const yields = [
+    { name: "aave",   apy: Number(marketData?.aave_apy ?? 0) },
+    { name: "morpho", apy: Number(marketData?.morpho_apy ?? 0) },
+    { name: "yearn",  apy: Number(marketData?.yearn_apy ?? 0) },
+    { name: "sky",    apy: Number(marketData?.sky_apy ?? 0) },
+  ].sort((a, b) => b.apy - a.apy);
+  const weights = [50, 30, 15, 5];
+  return yields.reduce((out, item, index) => {
+    out[item.name] = weights[index];
+    return out;
+  }, {});
+}
+
+function normaliseAllocation(output, marketData) {
+  const allocation = output && typeof output === "object" ? output : {};
+  const values = ["aave", "morpho", "yearn", "sky"].map((key) => Number(allocation[key]));
+  const sum = values.reduce((total, value) => total + (Number.isFinite(value) ? value : 0), 0);
+
+  if (
+    values.some((value) => !Number.isFinite(value)) ||
+    values.some((value) => value <= 0) ||
+    Math.abs(sum - 100) > 1
+  ) {
+    return rankedAllocation(marketData);
+  }
+
+  return {
+    aave:   Math.round(values[0]),
+    morpho: Math.round(values[1]),
+    yearn:  Math.round(values[2]),
+    sky:    Math.round(values[3]),
+  };
+}
+
 function buildAgent() {
   return new EvoYieldAgent(
     {
@@ -74,7 +109,7 @@ export async function evaluate(marketData) {
 
   const skill = getSkillInfo();
   return {
-    allocation:   result.output,
+    allocation:   normaliseAllocation(result.output, marketData),
     generation:   skill?.generation   ?? 0,
     fitnessScore: skill?.fitnessScore ?? 0,
   };

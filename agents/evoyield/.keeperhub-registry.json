@@ -2,18 +2,46 @@
   "schemaVersion": 1,
   "agent": "EvoYield-v1",
   "current": {
-    "skillId": "d3968dcb-1c93-4927-8b06-34df0f459b6c",
-    "generation": 1,
-    "workflowId": "gytp5r8igu4d994gjy8zb",
-    "deployedAt": "2026-04-30T12:32:39.924Z"
+    "skillId": "3de372cd-b59e-4464-8471-cd080fc1513c",
+    "generation": 3,
+    "workflowId": "6u8xvdzjhvnbzlu7jw74s",
+    "deployedAt": "2026-05-02T14:33:56.239Z"
   },
   "history": [
     {
-      "skillId": "d3968dcb-1c93-4927-8b06-34df0f459b6c",
-      "generation": 1,
+      "skillId": "3de372cd-b59e-4464-8471-cd080fc1513c",
+      "generation": 3,
       "workflowId": "gytp5r8igu4d994gjy8zb",
-      "deployedAt": "2026-04-30T12:32:39.924Z"
+      "deployedAt": "2026-04-30T12:32:39.924Z",
+      "retiredAt": "2026-05-02T14:28:51.158Z"
+    },
+    {
+      "skillId": "3de372cd-b59e-4464-8471-cd080fc1513c",
+      "generation": 3,
+      "workflowId": "aif3llxwqvsu5i1q7qved",
+      "deployedAt": "2026-05-02T14:28:51.158Z",
+      "retiredAt": "2026-05-02T14:29:25.967Z"
+    },
+    {
+      "skillId": "3de372cd-b59e-4464-8471-cd080fc1513c",
+      "generation": 3,
+      "workflowId": "5q5c4aginh4lmaio5bgha",
+      "deployedAt": "2026-05-02T14:29:25.967Z",
+      "retiredAt": "2026-05-02T14:31:48.161Z"
+    },
+    {
+      "skillId": "3de372cd-b59e-4464-8471-cd080fc1513c",
+      "generation": 3,
+      "workflowId": "xomj98wgb72zktxtyjlwr",
+      "deployedAt": "2026-05-02T14:31:48.161Z",
+      "retiredAt": "2026-05-02T14:33:56.239Z"
+    },
+    {
+      "skillId": "3de372cd-b59e-4464-8471-cd080fc1513c",
+      "generation": 3,
+      "workflowId": "6u8xvdzjhvnbzlu7jw74s",
+      "deployedAt": "2026-05-02T14:33:56.239Z"
     }
   ],
-  "lastSyncedAt": "2026-04-30T12:32:39.925Z"
+  "lastSyncedAt": "2026-05-02T14:33:56.239Z"
 }
