@@ -6,3 +6,4 @@ dist/
 .DS_Store
 *.js.map
 coverage/
+apps/dashboard/.next/

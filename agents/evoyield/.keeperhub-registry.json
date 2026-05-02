@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "agent": "EvoYield-v1",
   "current": {
-    "skillId": "3de372cd-b59e-4464-8471-cd080fc1513c",
-    "generation": 3,
+    "skillId": "ab96df38-c579-41d6-8601-b6ec279269c6",
+    "generation": 8,
     "workflowId": "6u8xvdzjhvnbzlu7jw74s",
     "deployedAt": "2026-05-02T14:33:56.239Z"
   },
@@ -37,11 +37,11 @@
       "retiredAt": "2026-05-02T14:33:56.239Z"
     },
     {
-      "skillId": "3de372cd-b59e-4464-8471-cd080fc1513c",
-      "generation": 3,
+      "skillId": "ab96df38-c579-41d6-8601-b6ec279269c6",
+      "generation": 8,
       "workflowId": "6u8xvdzjhvnbzlu7jw74s",
       "deployedAt": "2026-05-02T14:33:56.239Z"
     }
   ],
-  "lastSyncedAt": "2026-05-02T14:33:56.239Z"
+  "lastSyncedAt": "2026-05-02T16:15:35.207Z"
 }

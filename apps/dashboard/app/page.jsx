@@ -1,4 +1,7 @@
-import data from "../public/data/latest-run.json";
+"use client";
+
+import { useEffect, useState } from "react";
+import seedData from "../public/data/latest-run.json";
 
 const protocols = [
   { key: "aave", name: "Aave", color: "#2563eb" },
@@ -30,7 +33,7 @@ function allocationRows(allocation, amounts) {
   }));
 }
 
-function amountsFromAllocation(allocation, poolAmount = data.asset.poolAmount) {
+function amountsFromAllocation(allocation, poolAmount = 1) {
   return Object.fromEntries(
     protocols.map((protocol) => [
       protocol.key,
@@ -86,6 +89,30 @@ function HashLink({ tx }) {
 }
 
 export default function Dashboard() {
+  const [data, setData] = useState(seedData);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function refresh() {
+      try {
+        const res = await fetch(`/data/latest-run.json?ts=${Date.now()}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const next = await res.json();
+        if (!cancelled) setData(next);
+      } catch {
+        // Keep the seeded snapshot visible if the browser cannot refresh the JSON.
+      }
+    }
+
+    refresh();
+    const timer = window.setInterval(refresh, 10_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, []);
+
   const freshRows = allocationRows(data.freshAllocation.allocation, data.freshAllocation.amounts);
   const rebalanceRows = allocationRows(data.rebalance.targetAllocation, data.rebalance.targetAmounts);
   const totalDelta = data.rebalance.deltas.reduce((sum, item) => sum + Math.abs(item.deltaUsdc), 0);
@@ -282,7 +309,7 @@ export default function Dashboard() {
                   {item.type === "fresh" ? "Fresh allocation" : "Rebalance"}
                 </StatusPill>
               </div>
-              <AllocationBar rows={allocationRows(item.allocation, item.amounts ?? amountsFromAllocation(item.allocation))} />
+              <AllocationBar rows={allocationRows(item.allocation, item.amounts ?? amountsFromAllocation(item.allocation, data.asset.poolAmount))} />
               <p className="timelineSummary">{item.summary}</p>
               {item.deltas && (
                 <div className="miniDeltaGrid">

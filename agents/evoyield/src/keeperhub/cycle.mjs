@@ -16,6 +16,7 @@ import { synthesiseWorkflow }              from "./synth.mjs";
 import { snapshot, recordDeployment }       from "./registry.mjs";
 import { KeeperHubError }                  from "./client.mjs";
 import { buildRebalanceContext, recordAllocationState } from "./allocationState.mjs";
+import { publishDashboardRun }             from "./dashboardData.mjs";
 import { initAgent, evaluate, getActiveSkill } from "../agent/instance.mjs";
 
 export async function runCycle({ allowSynth = true, agentName = "EvoYield-v1" } = {}) {
@@ -138,6 +139,13 @@ export async function runCycle({ allowSynth = true, agentName = "EvoYield-v1" } 
       poolUsdc: rebalance.poolUsdc,
       workflowId: khResult.workflowId,
       executionId: khResult.executionId,
+    });
+    await publishDashboardRun({
+      marketData,
+      result,
+      khResult,
+      rebalance,
+      agentName,
     });
   }
 
