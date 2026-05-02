@@ -68,7 +68,7 @@ function normaliseAllocation(output, marketData) {
 
 function buildAgent() {
   const chainRpc = process.env.ZG_CHAIN_RPC ?? "https://evmrpc-testnet.0g.ai";
-  const storageRpc = process.env.ZG_STORAGE_RPC;
+  const storageRpc = process.env.ZG_STORAGE_RPC ?? "https://indexer-storage-testnet-turbo.0g.ai";
   const privateKey = process.env.ZG_PRIVATE_KEY;
   const registryAddress = process.env.SKILL_REGISTRY_ADDRESS?.trim() || null;
 
@@ -143,7 +143,7 @@ function buildAgent() {
       agentPrivateKey: privateKey ?? "0x" + "00".repeat(32),
       skillRegistryAddress: registryAddress ?? "0x0000000000000000000000000000000000000001",
       chainRpcUrl: chainRpc,
-      storageRpcUrl: storageRpc ?? "http://localhost:9000",
+      storageRpcUrl: storageRpc,
       daRpcUrl: process.env.ZG_DA_RPC ?? "http://localhost:9001",
       computeEndpoint: process.env.COMPUTE_ENDPOINT,
       evolutionModel: process.env.EVOLUTION_MODEL ?? "qwen/qwen-2.5-7b-instruct",

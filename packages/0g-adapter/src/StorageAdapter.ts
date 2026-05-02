@@ -5,8 +5,8 @@
  *  - KV store  → genome read/write (0G Storage blobs via Indexer)
  *  - Log store → append-only lineage history (0G Storage blobs)
  *
- * 0G Storage TypeScript SDK: @0glabs/0g-ts-sdk
- *   https://docs.0g.ai/developer-hub/building-on-0g/storage-sdk/typescript
+ * 0G Storage TypeScript SDK: @0gfoundation/0g-storage-ts-sdk
+ *   https://build.0g.ai/storage/
  *
  * Operational modes:
  *   "live"  — real 0G Storage node (requires storageRpcUrl + chainRpcUrl + privateKey)
@@ -22,13 +22,8 @@ import { createHash, randomUUID } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync, unlinkSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
-import { createRequire } from "node:module";
 import { SkillGenome } from "@evoframe/core";
 import type { IStorageAdapter, LineageEntry } from "@evoframe/core";
-
-// createRequire lets us load the CJS build of @0glabs/0g-ts-sdk without
-// the "Dynamic require of 'stream' is not supported" ESM error.
-const _require = createRequire(import.meta.url);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnySdk = any;
@@ -38,7 +33,7 @@ type AnySdk = any;
 // ---------------------------------------------------------------------------
 
 export interface StorageAdapterConfig {
-  /** 0G Storage indexer RPC URL — e.g. https://indexer-storage-testnet-standard.0g.ai */
+  /** 0G Storage indexer RPC URL — e.g. https://indexer-storage-testnet-turbo.0g.ai */
   storageRpcUrl?: string;
   /** 0G / EVM chain RPC — needed so the SDK can submit on-chain transactions */
   chainRpcUrl?: string;
@@ -120,7 +115,7 @@ export class StorageAdapter implements IStorageAdapter {
     const { storageRpcUrl, chainRpcUrl, privateKey, localMode } = this.config;
     if (!localMode && storageRpcUrl && chainRpcUrl && privateKey) {
       try {
-        this.zgSdk = _require("@0glabs/0g-ts-sdk");
+        this.zgSdk = await import("@0gfoundation/0g-storage-ts-sdk");
         const { Wallet, JsonRpcProvider } = await import("ethers");
         const provider = new JsonRpcProvider(chainRpcUrl);
         this.zgSigner = new Wallet(privateKey, provider);
@@ -290,8 +285,7 @@ export class StorageAdapter implements IStorageAdapter {
 
     if (err) throw new Error(`0G upload error: ${String(err)}`);
 
-    // result: { txHash, rootHash }
-    return (result as { rootHash: string }).rootHash || this.contentHash(content);
+    return this.extractRootHash(result, content);
   }
 
   /**
@@ -317,5 +311,19 @@ export class StorageAdapter implements IStorageAdapter {
 
   private contentHash(content: string): string {
     return createHash("sha256").update(content).digest("hex");
+  }
+
+  private extractRootHash(result: unknown, content: string): string {
+    if (result && typeof result === "object" && "rootHash" in result) {
+      const rootHash = (result as { rootHash?: unknown }).rootHash;
+      if (typeof rootHash === "string" && rootHash.length > 0) return rootHash;
+    }
+
+    if (result && typeof result === "object" && "rootHashes" in result) {
+      const rootHashes = (result as { rootHashes?: unknown }).rootHashes;
+      if (Array.isArray(rootHashes) && typeof rootHashes[0] === "string") return rootHashes[0];
+    }
+
+    return this.contentHash(content);
   }
 }

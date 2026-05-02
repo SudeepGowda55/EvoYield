@@ -21,7 +21,7 @@ export const config: EvoFrameConfig = {
   skillRegistryAddress:
     process.env["SKILL_REGISTRY_ADDRESS"] ?? "0x0000000000000000000000000000000000000001",
   chainRpcUrl: process.env["CHAIN_RPC_URL"] ?? "https://evmrpc-testnet.0g.ai",
-  storageRpcUrl: process.env["STORAGE_RPC_URL"] ?? "https://indexer-storage-testnet-standard.0g.ai",
+  storageRpcUrl: process.env["STORAGE_RPC_URL"] ?? "https://indexer-storage-testnet-turbo.0g.ai",
   daRpcUrl: process.env["DA_RPC_URL"] ?? "https://da-node-testnet.0g.ai",
   computeEndpoint:
     process.env["COMPUTE_ENDPOINT"] ?? "https://compute-network-6.integratenetwork.work",

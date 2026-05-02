@@ -69,7 +69,7 @@ program
         "AGENT_PRIVATE_KEY=0x...",
         "SKILL_REGISTRY_ADDRESS=0x...",
         "CHAIN_RPC_URL=https://evmrpc-testnet.0g.ai",
-        "STORAGE_RPC_URL=https://indexer-storage-testnet-standard.0g.ai",
+        "STORAGE_RPC_URL=https://indexer-storage-testnet-turbo.0g.ai",
         "DA_RPC_URL=https://da-node-testnet.0g.ai",
         "COMPUTE_ENDPOINT=https://api.0g.ai",
         "OPENAI_API_KEY=sk-...",

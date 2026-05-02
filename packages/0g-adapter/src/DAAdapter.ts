@@ -26,10 +26,7 @@
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { createRequire } from "node:module";
 import { SkillGenome } from "@evoframe/core";
-
-const _require = createRequire(import.meta.url);
 
 // ---------------------------------------------------------------------------
 // Types
@@ -104,7 +101,7 @@ export class DAAdapter {
     const { storageRpcUrl, chainRpcUrl, privateKey, localMode } = this.config;
     if (!localMode && storageRpcUrl && chainRpcUrl && privateKey) {
       try {
-        this.zgSdk = _require("@0glabs/0g-ts-sdk");
+        this.zgSdk = await import("@0gfoundation/0g-storage-ts-sdk");
         const { Wallet, JsonRpcProvider } = await import("ethers");
         const provider = new (JsonRpcProvider as new (url: string) => unknown)(chainRpcUrl);
         this.zgSigner = new (Wallet as new (key: string, provider: unknown) => unknown)(
@@ -255,7 +252,7 @@ export class DAAdapter {
     });
 
     if (err) throw new Error(`0G DA upload error: ${String(err)}`);
-    return (result as { rootHash: string }).rootHash || this.contentHash(content);
+    return this.extractRootHash(result, content);
   }
 
   private async zgDownload(rootHash: string): Promise<string> {
@@ -283,5 +280,19 @@ export class DAAdapter {
 
   private contentHash(content: string): string {
     return createHash("sha256").update(content).digest("hex");
+  }
+
+  private extractRootHash(result: unknown, content: string): string {
+    if (result && typeof result === "object" && "rootHash" in result) {
+      const rootHash = (result as { rootHash?: unknown }).rootHash;
+      if (typeof rootHash === "string" && rootHash.length > 0) return rootHash;
+    }
+
+    if (result && typeof result === "object" && "rootHashes" in result) {
+      const rootHashes = (result as { rootHashes?: unknown }).rootHashes;
+      if (Array.isArray(rootHashes) && typeof rootHashes[0] === "string") return rootHashes[0];
+    }
+
+    return this.contentHash(content);
   }
 }
