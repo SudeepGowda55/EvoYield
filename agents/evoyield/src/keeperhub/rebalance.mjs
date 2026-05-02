@@ -22,7 +22,7 @@ import { getExecutionLogs, waitForExecution } from "./checkAndExecute.mjs";
 
 const PATHS = {
   webhook: (id) => `/workflows/${encodeURIComponent(id)}/webhook`,
-  execute: (id) => `/workflows/${encodeURIComponent(id)}/execute`,
+  execute: (id) => `/workflow/${encodeURIComponent(id)}/execute`,
 };
 
 function executionIdFrom(result) {
@@ -213,6 +213,14 @@ export async function triggerRebalance({
             wait,
           });
         } catch (execErr) {
+          if (execErr instanceof KeeperHubError && execErr.status === 403) {
+            return {
+              triggered: false,
+              workflowId: id,
+              authFailed: true,
+              error: execErr.body?.error ?? "You do not have permission to run this workflow",
+            };
+          }
           if (!(execErr instanceof KeeperHubError) || execErr.status !== 404) {
             throw execErr;
           }

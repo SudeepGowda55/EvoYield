@@ -34,9 +34,12 @@ async function saveRegistry(reg) {
 /** Look up the workflow ID we previously synthesised for this skill+generation. */
 export async function findWorkflowFor(skillId, generation) {
   const reg = await loadRegistry();
-  const hit = reg.history.find(
-    (e) => e.skillId === skillId && e.generation === generation,
-  );
+  if (reg.current?.skillId === skillId && reg.current?.generation === generation) {
+    return reg.current.workflowId;
+  }
+  const hit = [...reg.history]
+    .filter((e) => e.skillId === skillId && e.generation === generation)
+    .sort((a, b) => new Date(b.deployedAt).getTime() - new Date(a.deployedAt).getTime())[0];
   return hit?.workflowId ?? null;
 }
 
