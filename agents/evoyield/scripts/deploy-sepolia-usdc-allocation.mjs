@@ -10,15 +10,18 @@ const base = (process.env.KEEPERHUB_API_URL ?? "https://app.keeperhub.com/api").
 const apiKey = process.env.KEEPERHUB_API_KEY;
 const workflowId = process.env.KH_REBALANCE_WORKFLOW_ID;
 const walletId = process.env.KH_WALLET_INTEGRATION_ID ?? "q42id6rvmca5wrt36phoy";
-const walletAddress = "0x06de353DDb9C102Cda81eDc8A535B88DFd1F7C08";
-const sepoliaUsdc = process.env.SEPOLIA_USDC_ADDRESS ?? "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
-const poolUsdc = process.env.EVOYIELD_TEST_POOL_USDC ?? "1";
+const walletAddress = process.env.KH_WALLET_ADDRESS ?? "0x06de353DDb9C102Cda81eDc8A535B88DFd1F7C08";
+const sepoliaUsdc =
+  process.env.EVOYIELD_USDC_ADDRESS ??
+  process.env.SEPOLIA_USDC_ADDRESS ??
+  "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
+const poolUsdc = process.env.EVOYIELD_TEST_POOL_USDC ?? "0.1";
 
 const recipients = {
-  aave: process.env.AAVE_SEPOLIA_RECIPIENT ?? walletAddress,
-  morpho: process.env.MORPHO_SEPOLIA_RECIPIENT ?? walletAddress,
-  yearn: process.env.YEARN_SEPOLIA_RECIPIENT ?? walletAddress,
-  sky: process.env.SKY_SEPOLIA_RECIPIENT ?? walletAddress,
+  aave: process.env.AAVE_SEPOLIA_RECIPIENT ?? process.env.EVOYIELD_AAVE_VAULT ?? "0x02b5e71D8C0D1e0C76EF66A7bA6bB58201363BB3",
+  morpho: process.env.MORPHO_SEPOLIA_RECIPIENT ?? process.env.EVOYIELD_MORPHO_VAULT ?? "0x0e2bb0C5802A1dDd4D56AB89bfC7f20732D91B5c",
+  yearn: process.env.YEARN_SEPOLIA_RECIPIENT ?? process.env.EVOYIELD_YEARN_VAULT ?? "0x24BF9F1c089b0374e3bDFA0Ed3c6D6C815D9C816",
+  sky: process.env.SKY_SEPOLIA_RECIPIENT ?? process.env.EVOYIELD_SKY_VAULT ?? "0xc0468ee91158e409814de57a7918217B30589a70",
 };
 
 if (!apiKey) throw new Error("KEEPERHUB_API_KEY is missing");

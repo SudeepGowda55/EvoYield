@@ -158,6 +158,65 @@ export async function triggerRebalance({
     return { triggered: false, payload };
   }
 
+  // Auto-patch the workflow with static BPS immediately before triggering
+  try {
+    const wf = await kh.get(`/workflows/${encodeURIComponent(id)}`);
+    
+    // Calculate BPS from percentage allocation
+    const aaveBps = Math.floor((allocation.aave || 0) * 100);
+    const morphoBps = Math.floor((allocation.morpho || 0) * 100);
+    const yearnBps = Math.floor((allocation.yearn || 0) * 100);
+    const skyBps = Math.floor((allocation.sky || 0) * 100);
+    
+    let patched = false;
+    let newNodes = wf?.nodes;
+    
+    if (newNodes && Array.isArray(newNodes)) {
+      for (const node of newNodes) {
+        const config = node.data?.config;
+        if ((config?.abiFunction === "rebalanceAmountToTargets" || config?.functionName === "rebalanceAmountToTargets") && config?.functionArgs) {
+          let args;
+          try {
+             args = JSON.parse(config.functionArgs);
+          } catch(e) {}
+          
+          if (Array.isArray(args) && args.length === 5) {
+             args[1] = aaveBps.toString();
+             args[2] = morphoBps.toString();
+             args[3] = yearnBps.toString();
+             args[4] = skyBps.toString();
+             config.functionArgs = JSON.stringify(args);
+             patched = true;
+          } else if (typeof args === "object" && args !== null) {
+             args.aaveBps = aaveBps.toString();
+             args.morphoBps = morphoBps.toString();
+             args.yearnBps = yearnBps.toString();
+             args.skyBps = skyBps.toString();
+             config.functionArgs = JSON.stringify(args);
+             patched = true;
+          } else {
+             // Fallback if the previous parsing was weird
+             config.functionArgs = JSON.stringify({
+                poolAssets: "100000",
+                aaveBps: aaveBps.toString(),
+                morphoBps: morphoBps.toString(),
+                yearnBps: yearnBps.toString(),
+                skyBps: skyBps.toString()
+             });
+             patched = true;
+          }
+        }
+      }
+    }
+    
+    if (patched) {
+      console.log(`   ↳ Auto-patching workflow ${id} write node with static BPS: aave=${aaveBps}, morpho=${morphoBps}, yearn=${yearnBps}, sky=${skyBps}`);
+      await kh.patch(`/workflows/${encodeURIComponent(id)}`, { nodes: newNodes });
+    }
+  } catch (err) {
+    console.warn("   ↳ Failed to auto-patch workflow BPS:", err.message);
+  }
+
   // Preferred path for KeeperHub webhook-trigger workflows that provide
   // a direct signed URL in the UI (no org API key needed). If that URL has
   // gone stale, fall through to the authenticated workflow API below.

@@ -48,6 +48,20 @@ function extractWorkflowResult(khResult = {}) {
   );
 }
 
+function extractTransaction(khResult = {}) {
+  const output = khResult.logs?.execution?.output ?? khResult.finalResult?.output ?? {};
+  const hash = output.transactionHash ?? output.result?.transactionHash ?? null;
+  if (!hash) return null;
+
+  return {
+    hash,
+    url: output.transactionLink ?? `https://sepolia.etherscan.io/tx/${hash}`,
+    status: output.success === false ? "failed" : "success",
+    gasUsedUnits: output.gasUsedUnits ?? null,
+    effectiveGasPrice: output.effectiveGasPrice ?? null,
+  };
+}
+
 function weightedApy(allocation, marketData = {}) {
   const normalized = normalizeAllocation(allocation);
   return Number(
@@ -71,7 +85,14 @@ function rebalanceSummary(deltas) {
 }
 
 export async function publishDashboardRun({ marketData, result, khResult, rebalance, agentName = "EvoYield-v1" } = {}) {
+  const existing = await readJson(DASHBOARD_PATH, {
+    history: [],
+    freshAllocation: null,
+    notes: [],
+  });
+
   const workflowResult = extractWorkflowResult(khResult);
+  const transaction = extractTransaction(khResult);
   const poolUsdc = Number(workflowResult?.poolUsdc ?? rebalance?.poolUsdc ?? 1);
   const targetAllocation = normalizeAllocation(workflowResult?.targetAllocation ?? result?.allocation);
   const previousAllocation = normalizeAllocation(workflowResult?.previousAllocation ?? rebalance?.previousAllocation);
@@ -82,12 +103,9 @@ export async function publishDashboardRun({ marketData, result, khResult, rebala
   const currentExpectedApy = weightedApy(targetAllocation, marketData);
   const previousExpectedApy = weightedApy(previousAllocation, marketData);
   const expectedApyLift = Number((currentExpectedApy - previousExpectedApy).toFixed(2));
-
-  const existing = await readJson(DASHBOARD_PATH, {
-    history: [],
-    freshAllocation: null,
-    notes: [],
-  });
+  const protocolTargets = rebalance?.protocolTargets ?? existing.protocolTargets ?? {};
+  const executableProtocols = rebalance?.executableProtocols ?? existing.executableProtocols ?? [];
+  const deltasWithTransactions = deltas.map((item) => ({ ...item, transaction }));
 
   const history = Array.isArray(existing.history) ? existing.history.filter(Boolean) : [];
   const alreadyRecorded = history.some((item) => item.executionId === khResult?.executionId);
@@ -102,7 +120,8 @@ export async function publishDashboardRun({ marketData, result, khResult, rebala
           executionId: khResult?.executionId ?? "pending",
           previousAllocation,
           allocation: targetAllocation,
-          deltas,
+          deltas: deltasWithTransactions,
+          transaction,
           previousExpectedApy,
           expectedApy: currentExpectedApy,
           expectedApyLift: Math.max(0, expectedApyLift),
@@ -131,6 +150,8 @@ export async function publishDashboardRun({ marketData, result, khResult, rebala
       ...(existing.workflow ?? {}),
       id: khResult?.workflowId ?? existing.workflow?.id,
     },
+    protocolTargets,
+    executableProtocols,
     marketData: {
       timestamp: new Date().toISOString(),
       ...marketData,
@@ -143,7 +164,10 @@ export async function publishDashboardRun({ marketData, result, khResult, rebala
       targetAllocation,
       previousAmounts,
       targetAmounts,
-      deltas,
+      deltas: deltasWithTransactions,
+      transaction,
+      protocolTargets,
+      executableProtocols,
     },
     history: nextHistory,
   });

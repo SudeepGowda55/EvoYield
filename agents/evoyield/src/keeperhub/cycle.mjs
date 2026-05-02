@@ -19,6 +19,12 @@ import { buildRebalanceContext, recordAllocationState } from "./allocationState.
 import { publishDashboardRun }             from "./dashboardData.mjs";
 import { initAgent, evaluate, getActiveSkill } from "../agent/instance.mjs";
 
+function extractTransactionLink(khResult = {}) {
+  const output = khResult.logs?.execution?.output ?? khResult.finalResult?.output ?? {};
+  const hash = output.transactionHash ?? output.result?.transactionHash ?? null;
+  return output.transactionLink ?? (hash ? `https://sepolia.etherscan.io/tx/${hash}` : null);
+}
+
 export async function runCycle({ allowSynth = true, agentName = "EvoYield-v1" } = {}) {
   console.log("\n" + "═".repeat(60));
   console.log(`🔄  EvoYield Cycle   ${new Date().toLocaleTimeString()}`);
@@ -40,8 +46,8 @@ export async function runCycle({ allowSynth = true, agentName = "EvoYield-v1" } 
   const rebalance = await buildRebalanceContext(result.allocation);
   console.log(
     rebalance.isInitialAllocation
-      ? `   Rebalance: initial 1 USDC allocation`
-      : `   Rebalance: delta from previous 1 USDC allocation`,
+      ? `   Rebalance: initial ${rebalance.poolUsdc} USDC allocation`
+      : `   Rebalance: delta from previous ${rebalance.poolUsdc} USDC allocation`,
   );
 
   // 4. Auto-synthesise a KeeperHub workflow for this generation if we haven't yet.
@@ -155,6 +161,11 @@ export async function runCycle({ allowSynth = true, agentName = "EvoYield-v1" } 
     const out = await sendDiscord(message);
     if (out?.sent)         console.log("\n📲 Discord notification sent.");
     else if (out?.skipped) console.log("\n📲 Discord webhook not configured — skipping.");
+  }
+
+  const transactionLink = extractTransactionLink(khResult);
+  if (transactionLink) {
+    console.log(`\n🔗 Rebalance transaction: ${transactionLink}`);
   }
 
   console.log("\n✅ Cycle complete.\n");

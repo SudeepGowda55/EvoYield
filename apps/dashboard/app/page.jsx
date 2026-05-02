@@ -81,6 +81,8 @@ function AllocationList({ rows }) {
 }
 
 function HashLink({ tx }) {
+  if (!tx?.hash || !tx?.url) return <span className="muted">No transaction hash</span>;
+
   return (
     <a href={tx.url} target="_blank" rel="noreferrer" className="hashLink">
       {shortHash(tx.hash)}
@@ -116,6 +118,7 @@ export default function Dashboard() {
   const freshRows = allocationRows(data.freshAllocation.allocation, data.freshAllocation.amounts);
   const rebalanceRows = allocationRows(data.rebalance.targetAllocation, data.rebalance.targetAmounts);
   const totalDelta = data.rebalance.deltas.reduce((sum, item) => sum + Math.abs(item.deltaUsdc), 0);
+  const latestTx = data.rebalance.transaction;
   const history = data.history ?? [];
   const rebalanceHistory = history.filter((item) => item.type === "rebalance");
   const totalApyLift = rebalanceHistory.reduce((sum, item) => sum + item.expectedApyLift, 0);
@@ -126,10 +129,10 @@ export default function Dashboard() {
       <section className="hero">
         <div>
           <div className="eyebrow">EvoYield live allocation dashboard</div>
-          <h1>1 USDC test pool allocated and monitored for rebalance</h1>
+          <h1>{data.asset.poolAmount} USDC test pool allocated and monitored for rebalance</h1>
           <p className="heroText">
-            0G selected the target percentages, KeeperHub executed the fresh allocation, and three
-            follow-up rebalances moved the same 1 USDC test pool as market APYs changed.
+            0G selected the target percentages, KeeperHub executed the vault rebalance, and the
+            dashboard tracks the same test pool with on-chain transaction hashes.
           </p>
         </div>
         <div className="heroMeta">
@@ -230,6 +233,7 @@ export default function Dashboard() {
                 <th>Target</th>
                 <th>Delta</th>
                 <th>Action</th>
+                <th>Transaction</th>
               </tr>
             </thead>
             <tbody>
@@ -242,6 +246,7 @@ export default function Dashboard() {
                     {item.deltaUsdc > 0 ? "+" : ""}{formatUsdc(item.deltaUsdc)}
                   </td>
                   <td><StatusPill tone={item.action === "hold" ? "blue" : "amber"}>{item.action}</StatusPill></td>
+                  <td><HashLink tx={item.transaction ?? latestTx} /></td>
                 </tr>
               ))}
             </tbody>
@@ -256,6 +261,10 @@ export default function Dashboard() {
             <span>KeeperHub execution</span>
             <strong>{data.rebalance.executionId}</strong>
           </div>
+          <div>
+            <span>Transaction hash</span>
+            <strong><HashLink tx={latestTx} /></strong>
+          </div>
         </div>
       </section>
 
@@ -263,7 +272,7 @@ export default function Dashboard() {
         <div className="panelHeader">
           <div>
             <p className="sectionKicker">Rebalance history</p>
-            <h2>How market changes moved the 1 USDC pool</h2>
+            <h2>How market changes moved the {data.asset.poolAmount} USDC pool</h2>
           </div>
           <StatusPill tone="green">{rebalanceHistory.length} KeeperHub executions</StatusPill>
         </div>
@@ -328,6 +337,12 @@ export default function Dashboard() {
                 <span>KeeperHub execution</span>
                 <strong>{item.executionId}</strong>
               </div>
+              {item.transaction && (
+                <div className="executionLine">
+                  <span>Transaction hash</span>
+                  <HashLink tx={item.transaction} />
+                </div>
+              )}
             </article>
           ))}
         </div>
@@ -337,10 +352,20 @@ export default function Dashboard() {
         <div className="panelHeader">
           <div>
             <p className="sectionKicker">Transaction hashes</p>
-            <h2>Fresh allocation transfers</h2>
+            <h2>On-chain executions</h2>
           </div>
         </div>
         <div className="txGrid">
+          {latestTx && (
+            <div className="txCard latestTx">
+              <div className="txTopline">
+                <strong>Vault rebalance</strong>
+                <StatusPill>{latestTx.status}</StatusPill>
+              </div>
+              <div className="txAmount">{formatUsdc(data.asset.poolAmount)}</div>
+              <HashLink tx={latestTx} />
+            </div>
+          )}
           {data.freshAllocation.transactions.map((tx) => (
             <div className="txCard" key={tx.hash}>
               <div className="txTopline">

@@ -1,12 +1,13 @@
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
 import { readJson, writeJsonAtomic } from "./fs.mjs";
+import { getExecutableProtocols, getProtocolTargets } from "./protocolTargets.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const STORE_PATH = resolve(__dirname, "../../.evoyield-allocation-state.json");
 
 const PROTOCOLS = ["aave", "morpho", "yearn", "sky"];
-const DEFAULT_POOL_USDC = 1;
+const DEFAULT_POOL_USDC = 0.1;
 
 function normalizeAllocation(allocation = {}) {
   return Object.fromEntries(
@@ -34,8 +35,13 @@ export async function buildRebalanceContext(nextAllocation, {
     updatedAt: null,
   });
 
-  const previousAllocation = state.currentAllocation ?? { aave: 0, morpho: 0, yearn: 0, sky: 0 };
-  const previousAmounts = state.currentAmounts ?? amountsFor(previousAllocation, poolUsdc);
+  const poolChanged = Number(state.poolUsdc ?? poolUsdc) !== Number(poolUsdc);
+  const previousAllocation = poolChanged
+    ? { aave: 0, morpho: 0, yearn: 0, sky: 0 }
+    : state.currentAllocation ?? { aave: 0, morpho: 0, yearn: 0, sky: 0 };
+  const previousAmounts = poolChanged
+    ? amountsFor(previousAllocation, poolUsdc)
+    : state.currentAmounts ?? amountsFor(previousAllocation, poolUsdc);
   const targetAllocation = normalizeAllocation(nextAllocation);
   const targetAmounts = amountsFor(targetAllocation, poolUsdc);
 
@@ -64,7 +70,9 @@ export async function buildRebalanceContext(nextAllocation, {
     targetAllocation,
     targetAmounts,
     deltas,
-    isInitialAllocation: !state.currentAllocation,
+    protocolTargets: getProtocolTargets(),
+    executableProtocols: getExecutableProtocols(),
+    isInitialAllocation: !state.currentAllocation || poolChanged,
   };
 }
 
