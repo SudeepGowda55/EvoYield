@@ -4,3 +4,4 @@
 
 export * from "./StorageAdapter.js";
 export * from "./ComputeAdapter.js";
+export * from "./DAAdapter.js";

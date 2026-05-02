@@ -1,26 +1,42 @@
 // Singleton agent instance shared across server routes and KeeperHub cycle.
 // Entry points (agent.mjs / server.mjs / keeperhub.mjs) load dotenv before
 // importing this module, so process.env.* is available inside functions.
+//
+// Live integrations enabled when env vars are set:
+//   ZG_PRIVATE_KEY + ZG_STORAGE_RPC           → real 0G Storage uploads
+//   ZG_PRIVATE_KEY + SKILL_REGISTRY_ADDRESS   → on-chain skill registration
+//   ZG_PRIVATE_KEY + ZG_STORAGE_RPC           → 0G DA cross-agent broadcast
 
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
+import { createPublicClient, createWalletClient, http } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 
 import { EvoYieldAgent } from "./EvoYieldAgent.mjs";
-import { StorageAdapter, ComputeAdapter } from "@evoframe/0g-adapter";
+import { StorageAdapter, ComputeAdapter, DAAdapter } from "@evoframe/0g-adapter";
 import { SkillRegistryAdapter } from "@evoframe/skill-registry";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT      = resolve(__dirname, "../../");
+const ROOT = resolve(__dirname, "../../");
 
-let agent      = null;
-let _ready     = false;
+// 0G Galileo testnet chain definition
+const ZG_CHAIN = {
+  id: 16602,
+  name: "0G Galileo",
+  nativeCurrency: { name: "A0GI", symbol: "A0GI", decimals: 18 },
+  rpcUrls: { default: { http: ["https://evmrpc-testnet.0g.ai"] } },
+};
+
+let agent = null;
+let _ready = false;
+let _da = null; // DAAdapter singleton for broadcasts
 
 function rankedAllocation(marketData) {
   const yields = [
-    { name: "aave",   apy: Number(marketData?.aave_apy ?? 0) },
+    { name: "aave", apy: Number(marketData?.aave_apy ?? 0) },
     { name: "morpho", apy: Number(marketData?.morpho_apy ?? 0) },
-    { name: "yearn",  apy: Number(marketData?.yearn_apy ?? 0) },
-    { name: "sky",    apy: Number(marketData?.sky_apy ?? 0) },
+    { name: "yearn", apy: Number(marketData?.yearn_apy ?? 0) },
+    { name: "sky", apy: Number(marketData?.sky_apy ?? 0) },
   ].sort((a, b) => b.apy - a.apy);
   const weights = [50, 30, 15, 5];
   return yields.reduce((out, item, index) => {
@@ -43,38 +59,108 @@ function normaliseAllocation(output, marketData) {
   }
 
   return {
-    aave:   Math.round(values[0]),
+    aave: Math.round(values[0]),
     morpho: Math.round(values[1]),
-    yearn:  Math.round(values[2]),
-    sky:    Math.round(values[3]),
+    yearn: Math.round(values[2]),
+    sky: Math.round(values[3]),
   };
 }
 
 function buildAgent() {
+  const chainRpc = process.env.ZG_CHAIN_RPC ?? "https://evmrpc-testnet.0g.ai";
+  const storageRpc = process.env.ZG_STORAGE_RPC;
+  const privateKey = process.env.ZG_PRIVATE_KEY;
+  const registryAddress = process.env.SKILL_REGISTRY_ADDRESS?.trim() || null;
+
+  const hasStorage = !!(privateKey && storageRpc);
+  const hasChain = !!(privateKey && registryAddress);
+
+  // ── viem clients (only when chain config is present) ──────────────
+  let walletClient = null;
+  let publicClient = null;
+  let agentAddress = "0x0000000000000000000000000000000000000000";
+
+  if (hasChain) {
+    const account = privateKeyToAccount(privateKey);
+    agentAddress = account.address;
+    walletClient = createWalletClient({
+      account,
+      chain: ZG_CHAIN,
+      transport: http(chainRpc),
+    });
+    publicClient = createPublicClient({
+      chain: ZG_CHAIN,
+      transport: http(chainRpc),
+    });
+    console.log(`  ⛓  0G Chain: on-chain registration enabled (${registryAddress})`);
+  }
+
+  // ── 0G Storage adapter ─────────────────────────────────────────────
+  const storageAdapter = new StorageAdapter(
+    hasStorage
+      ? {
+          storageRpcUrl: storageRpc,
+          chainRpcUrl: chainRpc,
+          privateKey,
+          localCachePath: resolve(ROOT, ".evoframe-cache.json"),
+        }
+      : {
+          localMode: true,
+          localCachePath: resolve(ROOT, ".evoframe-cache.json"),
+        },
+  );
+
+  // ── 0G DA adapter (cross-agent broadcast) ─────────────────────────
+  _da = new DAAdapter(
+    hasStorage
+      ? {
+          storageRpcUrl: storageRpc,
+          chainRpcUrl: chainRpc,
+          privateKey,
+          localManifestPath: resolve(ROOT, ".evoframe-broadcast.json"),
+        }
+      : {
+          localMode: true,
+          localManifestPath: resolve(ROOT, ".evoframe-broadcast.json"),
+        },
+  );
+
+  // ── SkillRegistry adapter ──────────────────────────────────────────
+  const registryAdapter = new SkillRegistryAdapter(
+    hasChain
+      ? {
+          contractAddress: registryAddress,
+          agentAddress,
+          walletClient,
+          publicClient,
+        }
+      : { localMode: true },
+  );
+
   return new EvoYieldAgent(
     {
-      agentName:             "EvoYield-v1",
-      agentPrivateKey:       "0x" + "00".repeat(32),
-      skillRegistryAddress:  "0x0000000000000000000000000000000000000001",
-      chainRpcUrl:           "http://localhost:8545",
-      storageRpcUrl:         "http://localhost:9000",
-      daRpcUrl:              "http://localhost:9001",
-      computeEndpoint:       process.env.COMPUTE_ENDPOINT,
-      evolutionModel:        process.env.EVOLUTION_MODEL ?? "qwen/qwen-2.5-7b-instruct",
-      fitnessThreshold:      60,
+      agentName: "EvoYield-v1",
+      agentPrivateKey: privateKey ?? "0x" + "00".repeat(32),
+      skillRegistryAddress: registryAddress ?? "0x0000000000000000000000000000000000000001",
+      chainRpcUrl: chainRpc,
+      storageRpcUrl: storageRpc ?? "http://localhost:9000",
+      daRpcUrl: process.env.ZG_DA_RPC ?? "http://localhost:9001",
+      computeEndpoint: process.env.COMPUTE_ENDPOINT,
+      evolutionModel: process.env.EVOLUTION_MODEL ?? "qwen/qwen-2.5-7b-instruct",
+      fitnessThreshold: 60,
       maxCandidatesPerCycle: 2,
-      autoRegisterOnChain:   false,
+      autoRegisterOnChain: hasChain,
     },
-    new StorageAdapter({
-      localMode:      true,
-      localCachePath: resolve(ROOT, ".evoframe-cache.json"),
-    }),
+    storageAdapter,
     new ComputeAdapter({
       computeEndpoint: process.env.COMPUTE_ENDPOINT,
-      apiKey:          process.env.ZG_API_KEY,
-      mode:            process.env.COMPUTE_MODE ?? "live",
+      apiKey: process.env.ZG_API_KEY,
+      mode: process.env.COMPUTE_MODE ?? "live",
+      zgPrivateKey: process.env.ZG_PRIVATE_KEY,
+      zgProviderAddress: process.env.ZG_COMPUTE_PROVIDER,
+      zgRpcUrl: process.env.ZG_CHAIN_RPC ?? "https://evmrpc-testnet.0g.ai",
     }),
-    new SkillRegistryAdapter({ localMode: true })
+    registryAdapter,
   );
 }
 
@@ -82,11 +168,26 @@ export async function initAgent() {
   if (_ready) return;
   agent = buildAgent();
 
-  agent.getEngine().on((e) => {
-    if (e.type === "mutation_requested")  console.log("\n🧬 Evolving strategy via 0G compute...");
+  agent.getEngine().on(async (e) => {
+    if (e.type === "mutation_requested") console.log("\n🧬 Evolving strategy via 0G compute...");
     if (e.type === "candidate_generated") process.stdout.write(".");
-    if (e.type === "skill_promoted")      console.log(" ✅ New strategy promoted!");
-    if (e.type === "evolution_failed")    console.log(" ❌ Evolution failed");
+    if (e.type === "skill_promoted") {
+      console.log(" ✅ New strategy promoted!");
+      // Broadcast the promoted skill to the 0G DA channel so other agents can discover it
+      try {
+        const skill = getActiveSkill();
+        if (skill && _da) {
+          // Get the 0G rootHash if storage was live
+          const storageAdapter = agent?.getStorageAdapter?.();
+          const rootHash = storageAdapter?.getRootHash?.(skill.storageKey) ?? null;
+          await _da.broadcastSkill(skill, "EvoYield-v1", rootHash);
+        }
+      } catch (err) {
+        // best-effort — don't fail evolution if DA broadcast errors
+        console.warn(`  ⚠️  DA broadcast failed: ${err.message ?? err}`);
+      }
+    }
+    if (e.type === "evolution_failed") console.log(" ❌ Evolution failed");
   });
 
   console.log("⏳ Initialising EvoYield agent...");
@@ -101,16 +202,16 @@ export async function evaluate(marketData) {
   if (!agent) throw new Error("Agent not initialized. Call initAgent() first.");
 
   const result = await agent.run({
-    id:          `eval-${Date.now()}`,
+    id: `eval-${Date.now()}`,
     description: "Evaluate yield allocation",
-    input:       marketData,
-    domain:      "defi",
+    input: marketData,
+    domain: "defi",
   });
 
   const skill = getSkillInfo();
   return {
-    allocation:   normaliseAllocation(result.output, marketData),
-    generation:   skill?.generation   ?? 0,
+    allocation: normaliseAllocation(result.output, marketData),
+    generation: skill?.generation ?? 0,
     fitnessScore: skill?.fitnessScore ?? 0,
   };
 }
@@ -140,4 +241,9 @@ export function getActiveSkill() {
 export async function forceRegenerate(reason = "external regeneration trigger") {
   if (!agent) throw new Error("Agent not initialized");
   return agent.forceEvolve("yield-allocator", reason);
+}
+
+/** Returns the DAAdapter singleton (for external broadcast/discover calls) */
+export function getDAAdapter() {
+  return _da;
 }

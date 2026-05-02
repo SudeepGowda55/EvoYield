@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "skillId": "bd580aed-4547-4557-b5ff-21c3ea0f3606",
+      "name": "yield-allocator",
+      "agentId": "EvoYield-v1",
+      "rootHash": "1177e4315cef96b43d8168aa3fbe06d8279e87b82767ad981cf4bc4e79fe48b8",
+      "storageKey": "skill-name:EvoYield-v1:yield-allocator",
+      "generation": 2,
+      "fitnessScore": 100,
+      "domain": "defi",
+      "broadcastAt": 1777733129527
+    },
+    {
+      "skillId": "7ff4e653-2166-43a0-b872-540807af53d4",
+      "name": "yield-allocator",
+      "agentId": "EvoYield-v1",
+      "rootHash": "7cad914abaa17ecb568879d49cffbbbede1130012d41e7dec5c3b22093812aac",
+      "storageKey": "skill-name:EvoYield-v1:yield-allocator",
+      "generation": 3,
+      "fitnessScore": 100,
+      "domain": "defi",
+      "broadcastAt": 1777733271234
+    },
+    {
+      "skillId": "6656bae2-8954-4689-b270-686e9c28095c",
+      "name": "yield-allocator",
+      "agentId": "EvoYield-v1",
+      "rootHash": "c8803b587e95e111622c91ca472695ea6e97b7d03240b821ca7952c08f2e64b0",
+      "storageKey": "skill-name:EvoYield-v1:yield-allocator",
+      "generation": 4,
+      "fitnessScore": 100,
+      "domain": "defi",
+      "broadcastAt": 1777733424640
+    },
+    {
+      "skillId": "02a92f08-f156-4e69-a449-2c550f7919da",
+      "name": "yield-allocator",
+      "agentId": "EvoYield-v1",
+      "rootHash": "e29ac1fcb42107145866c421d4ce6c56005c4d527047e3ade1cea7bf13bb6210",
+      "storageKey": "skill-name:EvoYield-v1:yield-allocator",
+      "generation": 5,
+      "fitnessScore": 100,
+      "domain": "defi",
+      "broadcastAt": 1777733597599
+    },
+    {
+      "skillId": "fe5c3a6b-cf5f-4684-a883-ae7b62272a5c",
+      "name": "yield-allocator",
+      "agentId": "EvoYield-v1",
+      "rootHash": "9151d86f50dd257679b5f3c9800f4f4757ec5763d38d844df665d9e6ee745f77",
+      "storageKey": "skill:fe5c3a6b-cf5f-4684-a883-ae7b62272a5c",
+      "generation": 6,
+      "fitnessScore": 100,
+      "domain": "defi",
+      "broadcastAt": 1777734257501
+    }
+  ],
+  "updatedAt": 1777734257503
+}

@@ -95,7 +95,7 @@ export const SKILL_REGISTRY_ABI = [
 // Domain enum mapping
 // ---------------------------------------------------------------------------
 
-const DOMAIN_MAP: Record<SkillDomain, number> = {
+const DOMAIN_MAP: Record<string, number> = {
   research: 0,
   coding: 1,
   reasoning: 2,
@@ -104,6 +104,10 @@ const DOMAIN_MAP: Record<SkillDomain, number> = {
   communication: 5,
   planning: 6,
   general: 7,
+  // extended domains mapped to DOMAIN_GENERAL (contract only supports 0-7)
+  defi: 7,
+  trading: 7,
+  finance: 7,
 };
 
 const DOMAIN_REVERSE: Record<number, SkillDomain> = Object.fromEntries(
@@ -149,21 +153,20 @@ export class SkillRegistryAdapter implements ISkillRegistryAdapter {
       ? this.uuidToBytes32(genome.parentId)
       : (("0x" + "00".repeat(32)) as `0x${string}`);
 
-    const hash = await this.config.walletClient.writeContract({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hash = await (this.config.walletClient.writeContract as any)({
       address: this.config.contractAddress as Address,
       abi: SKILL_REGISTRY_ABI,
       functionName: "registerSkill",
       args: [
         skillId32,
         parentId32,
-        genome.storageKey, // use storageKey as the hash reference
+        genome.storageKey,
         genome.name,
-        DOMAIN_MAP[genome.domain] as unknown as never,
-        genome.generation as unknown as never,
-        genome.fitnessScore as unknown as never,
+        DOMAIN_MAP[genome.domain],
+        genome.generation,
+        genome.fitnessScore,
       ],
-      account: this.config.agentAddress as Address,
-      chain: null,
     });
 
     return hash as string;
@@ -178,12 +181,13 @@ export class SkillRegistryAdapter implements ISkillRegistryAdapter {
         .slice(0, limit);
     }
 
-    const domainId = DOMAIN_MAP[domain];
-    const [skillIds] = (await this.config.publicClient.readContract({
+    const domainId = DOMAIN_MAP[domain] ?? DOMAIN_MAP["general"];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [skillIds] = (await (this.config.publicClient.readContract as any)({
       address: this.config.contractAddress as Address,
       abi: SKILL_REGISTRY_ABI,
       functionName: "getTopSkills",
-      args: [domainId as unknown as never, BigInt(0), BigInt(limit)],
+      args: [domainId, BigInt(0), BigInt(limit)],
     })) as [readonly `0x${string}`[], bigint];
 
     // For each skill ID, fetch full entry
@@ -199,13 +203,12 @@ export class SkillRegistryAdapter implements ISkillRegistryAdapter {
   async recordUsage(skillId: string, agentAddress: string): Promise<void> {
     if (this.config.localMode || !this.config.walletClient) return;
 
-    await this.config.walletClient.writeContract({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (this.config.walletClient.writeContract as any)({
       address: this.config.contractAddress as Address,
       abi: SKILL_REGISTRY_ABI,
       functionName: "recordImport",
       args: [this.uuidToBytes32(skillId), agentAddress as Address],
-      account: this.config.agentAddress as Address,
-      chain: null,
     });
   }
 

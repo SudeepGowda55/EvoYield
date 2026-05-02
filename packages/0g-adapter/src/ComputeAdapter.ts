@@ -24,10 +24,16 @@ export interface ComputeAdapterConfig {
   mode: ComputeMode;
   /** 0G Compute endpoint — required for "live" mode */
   computeEndpoint?: string;
-  /** API key for 0G Compute or OpenAI */
+  /** Static API key (fallback when broker not configured) */
   apiKey?: string;
   /** OpenAI-compatible base URL for "openai" mode */
   openAiBaseUrl?: string;
+  /** Wallet private key for 0G Compute SDK broker auth (Direct provider flow) */
+  zgPrivateKey?: string;
+  /** Provider address on-chain (from `broker.inference.listService()`) */
+  zgProviderAddress?: string;
+  /** Chain RPC URL for broker wallet */
+  zgRpcUrl?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -56,9 +62,27 @@ interface ZgComputeResponse {
 
 export class ComputeAdapter implements IComputeAdapter {
   private readonly config: ComputeAdapterConfig;
+  private _broker: unknown = null;
 
   constructor(config: ComputeAdapterConfig) {
     this.config = config;
+  }
+
+  /** Lazily initialize the 0G Compute Network broker (Direct provider flow). */
+  private async getBroker(): Promise<{ inference: { getRequestHeaders: Function } } | null> {
+    if (this._broker) return this._broker as { inference: { getRequestHeaders: Function } };
+    if (!this.config.zgPrivateKey || !this.config.zgRpcUrl) return null;
+    try {
+      const { createZGComputeNetworkBroker } = await import("@0gfoundation/0g-compute-ts-sdk");
+      const { ethers } = await import("ethers");
+      const rpcProvider = new ethers.JsonRpcProvider(this.config.zgRpcUrl);
+      const wallet = new ethers.Wallet(this.config.zgPrivateKey, rpcProvider);
+      this._broker = await createZGComputeNetworkBroker(wallet as any);
+      console.log("  ✅ 0G Compute broker initialized");
+    } catch (err) {
+      console.warn("  ⚠️  0G Compute broker init failed:", err);
+    }
+    return this._broker as { inference: { getRequestHeaders: Function } } | null;
   }
 
   async generateMutations(
@@ -87,11 +111,11 @@ export class ComputeAdapter implements IComputeAdapter {
     model: string,
     count: number,
   ): Promise<MutationCandidate[]> {
-    if (!this.config.computeEndpoint || !this.config.apiKey) {
-      throw new Error("0G Compute: computeEndpoint and apiKey are required");
+    if (!this.config.computeEndpoint) {
+      throw new Error("0G Compute: computeEndpoint is required");
     }
 
-    // 0G Compute proxy path — different from standard OpenAI path
+    // Direct provider path (TEE-backed) — different from Router OpenAI path
     const url = `${this.config.computeEndpoint}/v1/proxy/chat/completions`;
 
     // 0G Compute doesn't support n>1; make sequential calls for multiple candidates.
@@ -114,11 +138,34 @@ export class ComputeAdapter implements IComputeAdapter {
         // best-effort logging — don't fail the request if logging breaks
       }
 
+      // Build auth headers: prefer SDK broker (Direct flow), fall back to static key
+      let authHeaders: Record<string, string> = {};
+      if (this.config.zgProviderAddress) {
+        try {
+          const broker = await this.getBroker();
+          if (broker) {
+            const brokerHeaders = await broker.inference.getRequestHeaders(
+              this.config.zgProviderAddress,
+              prompt,
+              model,
+            );
+            authHeaders = brokerHeaders as Record<string, string>;
+          } else if (this.config.apiKey) {
+            authHeaders = { Authorization: `Bearer ${this.config.apiKey}` };
+          }
+        } catch (err) {
+          console.warn("  ⚠️  0G Compute: broker headers failed, trying static key:", err);
+          if (this.config.apiKey) authHeaders = { Authorization: `Bearer ${this.config.apiKey}` };
+        }
+      } else if (this.config.apiKey) {
+        authHeaders = { Authorization: `Bearer ${this.config.apiKey}` };
+      }
+
       const response = await this.zgFetchWithRetry(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${this.config.apiKey}`,
+          ...authHeaders,
         },
         body: JSON.stringify({
           model,
@@ -131,7 +178,20 @@ export class ComputeAdapter implements IComputeAdapter {
         }),
       });
 
-      const data = (await response.json()) as ZgComputeResponse;
+      let data: ZgComputeResponse;
+      try {
+        data = (await response.json()) as ZgComputeResponse;
+      } catch (err) {
+        console.warn(`  ⚠️  0G Compute: failed to parse JSON response — ${err}`);
+        continue;
+      }
+      if (!data?.choices || !Array.isArray(data.choices)) {
+        console.warn(
+          "  ⚠️  0G Compute response missing choices:",
+          String(JSON.stringify(data) ?? "(undefined)").slice(0, 300),
+        );
+        continue;
+      }
       const parsed = this.parseComputeResponse(data, 1);
       if (parsed[0]) candidates.push(parsed[0]);
     }
@@ -415,6 +475,16 @@ return { issues, score, issueCount: issues.length, summary: issues.length === 0 
 
   private parseComputeResponse(data: ZgComputeResponse, count: number): MutationCandidate[] {
     const candidates: MutationCandidate[] = [];
+
+    // Guard: if choices is missing the API returned an error object
+    if (!data?.choices || !Array.isArray(data.choices)) {
+      console.warn(
+        "  ⚠️  0G Compute: unexpected response shape:",
+        String(JSON.stringify(data) ?? "(undefined)").slice(0, 200),
+      );
+      return candidates;
+    }
+
     const attestation = data.attestation
       ? `${data.attestation.signature}:${data.attestation.outputHash}`
       : `unattested-${data.id}`;
