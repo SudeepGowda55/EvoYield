@@ -130,6 +130,7 @@ export async function triggerRebalance({
   marketData,
   generation,
   fitnessScore,
+  rebalance,
   workflowId, // optional — overrides the env var (used by auto-synth)
   via = "webhook", // "webhook" or "execute"
   wait = (process.env.KH_WAIT_FOR_WORKFLOW ?? "").toLowerCase() === "true",
@@ -142,6 +143,7 @@ export async function triggerRebalance({
     marketData,
     generation,
     fitnessScore,
+    ...(rebalance ? { rebalance } : {}),
     timestamp: new Date().toISOString(),
   };
 

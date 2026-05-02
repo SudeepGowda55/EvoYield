@@ -15,6 +15,7 @@ import { sendDiscord, formatCycleMessage } from "./notify.mjs";
 import { synthesiseWorkflow }              from "./synth.mjs";
 import { snapshot, recordDeployment }       from "./registry.mjs";
 import { KeeperHubError }                  from "./client.mjs";
+import { buildRebalanceContext, recordAllocationState } from "./allocationState.mjs";
 import { initAgent, evaluate, getActiveSkill } from "../agent/instance.mjs";
 
 export async function runCycle({ allowSynth = true, agentName = "EvoYield-v1" } = {}) {
@@ -34,6 +35,13 @@ export async function runCycle({ allowSynth = true, agentName = "EvoYield-v1" } 
   const { aave, morpho, yearn, sky } = result.allocation ?? {};
   console.log(`   Aave: ${aave}%  |  Morpho: ${morpho}%  |  Yearn: ${yearn}%  |  Sky: ${sky}%`);
   console.log(`   Strategy: gen-${result.generation}, fitness=${result.fitnessScore}`);
+
+  const rebalance = await buildRebalanceContext(result.allocation);
+  console.log(
+    rebalance.isInitialAllocation
+      ? `   Rebalance: initial 1 USDC allocation`
+      : `   Rebalance: delta from previous 1 USDC allocation`,
+  );
 
   // 4. Auto-synthesise a KeeperHub workflow for this generation if we haven't yet.
   let synthInfo = null;
@@ -74,6 +82,7 @@ export async function runCycle({ allowSynth = true, agentName = "EvoYield-v1" } 
       marketData,
       generation:   result.generation,
       fitnessScore: result.fitnessScore,
+      rebalance,
       workflowId:   overrideId,
     });
     if (!khResult?.triggered && allowSynth && /(permission|forbidden|disabled)/i.test(khResult?.error ?? "")) {
@@ -93,12 +102,13 @@ export async function runCycle({ allowSynth = true, agentName = "EvoYield-v1" } 
           synthInfo = forced;
           khResult = await triggerRebalance({
             allocation:   result.allocation,
-            marketData,
-            generation:   result.generation,
-            fitnessScore: result.fitnessScore,
-            workflowId:   forced.workflowId,
-          });
-        }
+          marketData,
+          generation:   result.generation,
+          fitnessScore: result.fitnessScore,
+          rebalance,
+          workflowId:   forced.workflowId,
+        });
+      }
       }
     }
     if (!khResult?.triggered) {
@@ -121,6 +131,14 @@ export async function runCycle({ allowSynth = true, agentName = "EvoYield-v1" } 
     } else {
       throw err;
     }
+  }
+
+  if (khResult?.triggered && !khResult?.confirmationError && !["failed", "error"].includes(String(khResult.finalStatus ?? "").toLowerCase())) {
+    await recordAllocationState(result.allocation, {
+      poolUsdc: rebalance.poolUsdc,
+      workflowId: khResult.workflowId,
+      executionId: khResult.executionId,
+    });
   }
 
   // 6. Notify
