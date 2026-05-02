@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-02T16:35:13.912Z",
+  "generatedAt": "2026-05-02T16:44:08.219Z",
   "agent": "EvoYield-v1",
   "chain": "Ethereum Sepolia",
   "wallet": "0x06de353DDb9C102Cda81eDc8A535B88DFd1F7C08",
@@ -18,7 +18,7 @@
     "name": "EvoYield Sepolia USDC Rebalancer"
   },
   "marketData": {
-    "timestamp": "2026-05-02T16:35:13.912Z",
+    "timestamp": "2026-05-02T16:44:08.219Z",
     "aave_apy": 3.65,
     "morpho_apy": 3.21,
     "yearn_apy": 3.64,
@@ -76,8 +76,8 @@
     ]
   },
   "rebalance": {
-    "timestamp": "2026-05-02T16:35:12.856Z",
-    "executionId": "rd3x3v0z5d83cu0t1ojxz",
+    "timestamp": "2026-05-02T16:44:04.010Z",
+    "executionId": "qifznqbpo40qwzqc2bd71",
     "mode": "rebalance",
     "previousAllocation": {
       "aave": 50,
@@ -505,6 +505,66 @@
       "timestamp": "2026-05-02T16:35:12.856Z",
       "type": "rebalance",
       "executionId": "rd3x3v0z5d83cu0t1ojxz",
+      "previousAllocation": {
+        "aave": 50,
+        "morpho": 15,
+        "yearn": 30,
+        "sky": 5
+      },
+      "allocation": {
+        "aave": 50,
+        "morpho": 15,
+        "yearn": 30,
+        "sky": 5
+      },
+      "deltas": [
+        {
+          "protocol": "aave",
+          "previousPct": 50,
+          "targetPct": 50,
+          "previousAmountUsdc": 0.5,
+          "targetAmountUsdc": 0.5,
+          "deltaUsdc": 0,
+          "action": "hold"
+        },
+        {
+          "protocol": "morpho",
+          "previousPct": 15,
+          "targetPct": 15,
+          "previousAmountUsdc": 0.15,
+          "targetAmountUsdc": 0.15,
+          "deltaUsdc": 0,
+          "action": "hold"
+        },
+        {
+          "protocol": "yearn",
+          "previousPct": 30,
+          "targetPct": 30,
+          "previousAmountUsdc": 0.3,
+          "targetAmountUsdc": 0.3,
+          "deltaUsdc": 0,
+          "action": "hold"
+        },
+        {
+          "protocol": "sky",
+          "previousPct": 5,
+          "targetPct": 5,
+          "previousAmountUsdc": 0.05,
+          "targetAmountUsdc": 0.05,
+          "deltaUsdc": 0,
+          "action": "hold"
+        }
+      ],
+      "previousExpectedApy": 3.4,
+      "expectedApy": 3.4,
+      "expectedApyLift": 0,
+      "summary": "No USDC movement was needed because the target allocation matched the current pool."
+    },
+    {
+      "label": "Gen 8 hold check",
+      "timestamp": "2026-05-02T16:44:04.010Z",
+      "type": "rebalance",
+      "executionId": "qifznqbpo40qwzqc2bd71",
       "previousAllocation": {
         "aave": 50,
         "morpho": 15,

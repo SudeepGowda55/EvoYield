@@ -7,6 +7,7 @@
 
 import { createHash } from "node:crypto";
 import { SkillGenome, ISkillRegistryAdapter, SkillDomain } from "@evoframe/core";
+import { isAddress } from "viem";
 import type { PublicClient, WalletClient, Hash, Address } from "viem";
 
 // ---------------------------------------------------------------------------
@@ -200,16 +201,29 @@ export class SkillRegistryAdapter implements ISkillRegistryAdapter {
     return genomes;
   }
 
-  async recordUsage(skillId: string, agentAddress: string): Promise<void> {
+  async recordUsage(skillId: string, agentAddress?: string): Promise<void> {
     if (this.config.localMode || !this.config.walletClient) return;
 
+    const importingAgent = agentAddress && isAddress(agentAddress)
+      ? agentAddress
+      : this.config.agentAddress;
+    const skillId32 = this.uuidToBytes32(skillId);
+
+    if (await this.isSelfImport(skillId32, importingAgent as Address)) return;
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (this.config.walletClient.writeContract as any)({
-      address: this.config.contractAddress as Address,
-      abi: SKILL_REGISTRY_ABI,
-      functionName: "recordImport",
-      args: [this.uuidToBytes32(skillId), agentAddress as Address],
-    });
+    try {
+      await (this.config.walletClient.writeContract as any)({
+        address: this.config.contractAddress as Address,
+        abi: SKILL_REGISTRY_ABI,
+        functionName: "recordImport",
+        args: [skillId32, importingAgent as Address],
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (/self-import/i.test(message)) return;
+      throw err;
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -267,6 +281,35 @@ export class SkillRegistryAdapter implements ISkillRegistryAdapter {
       sealedInferenceAttestation: null,
       onChainTxHash: skillId32,
     };
+  }
+
+  private async isSelfImport(skillId32: `0x${string}`, importingAgent: Address): Promise<boolean> {
+    if (!this.config.publicClient) return false;
+
+    try {
+      const entry = (await this.config.publicClient.readContract({
+        address: this.config.contractAddress as Address,
+        abi: SKILL_REGISTRY_ABI,
+        functionName: "skills",
+        args: [skillId32],
+      })) as [
+        `0x${string}`,
+        `0x${string}`,
+        Address,
+        string,
+        string,
+        number,
+        number,
+        number,
+        bigint,
+        bigint,
+        boolean,
+      ];
+
+      return entry[10] && entry[2].toLowerCase() === importingAgent.toLowerCase();
+    } catch {
+      return false;
+    }
   }
 
   /** Convert UUID string to bytes32 hex (keccak256 of the UUID bytes) */

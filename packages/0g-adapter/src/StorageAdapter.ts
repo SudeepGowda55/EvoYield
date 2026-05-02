@@ -280,7 +280,7 @@ export class StorageAdapter implements IStorageAdapter {
     const indexer = new Indexer(this.config.storageRpcUrl!);
     const [result, err] = await indexer.upload(data, this.config.chainRpcUrl!, this.zgSigner, {
       tags: "0x",
-      finalityRequired: true,
+      finalityRequired: false,
     });
 
     if (err) throw new Error(`0G upload error: ${String(err)}`);
