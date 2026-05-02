@@ -103,6 +103,17 @@ export class ComputeAdapter implements IComputeAdapter {
         await new Promise<void>((r) => setTimeout(r, 7000));
       }
 
+      // Log the outgoing 0G Compute request
+      try {
+        console.log(
+          `  🔗 0G Compute request — model=${model} attempt=${i + 1}/${count} promptLen=${
+            String(prompt).length
+          }`,
+        );
+      } catch {
+        // best-effort logging — don't fail the request if logging breaks
+      }
+
       const response = await this.zgFetchWithRetry(url, {
         method: "POST",
         headers: {
