@@ -22,24 +22,23 @@ import { getExecutionLogs, waitForExecution } from "./checkAndExecute.mjs";
 
 const PATHS = {
   webhook: (id) => `/workflows/${encodeURIComponent(id)}/webhook`,
-  execute: (id) => `/workflow/${encodeURIComponent(id)}/execute`,
+  execute: (id) => `/workflows/${encodeURIComponent(id)}/execute`,
 };
 
 function executionIdFrom(result) {
-  return result?.execution_id
-    ?? result?.executionId
-    ?? result?.id
-    ?? result?.execution?.id
-    ?? result?.run_id
-    ?? result?.runId
-    ?? null;
+  return (
+    result?.execution_id ??
+    result?.executionId ??
+    result?.id ??
+    result?.execution?.id ??
+    result?.run_id ??
+    result?.runId ??
+    null
+  );
 }
 
 function workflowStatusFrom(result) {
-  return result?.status
-    ?? result?.execution?.status
-    ?? result?.state
-    ?? null;
+  return result?.status ?? result?.execution?.status ?? result?.state ?? null;
 }
 
 function printJsonBlock(label, value, indent = "      ") {
@@ -75,12 +74,15 @@ function printExecutionLogs(logResp) {
   }
 }
 
-async function confirmExecution(result, {
-  workflowId,
-  source,
-  wait = false,
-  timeoutMs = Number(process.env.KH_WORKFLOW_WAIT_MS ?? 45_000),
-} = {}) {
+async function confirmExecution(
+  result,
+  {
+    workflowId,
+    source,
+    wait = false,
+    timeoutMs = Number(process.env.KH_WORKFLOW_WAIT_MS ?? 45_000),
+  } = {},
+) {
   const executionId = executionIdFrom(result);
   const status = workflowStatusFrom(result);
   const out = {
@@ -113,8 +115,11 @@ async function confirmExecution(result, {
   }
 
   if (!executionId) {
-    const keys = result && typeof result === "object" ? Object.keys(result).join(", ") : typeof result;
-    console.warn(`   ↳ KeeperHub accepted the trigger but did not return an execution id (${keys || "empty response"})`);
+    const keys =
+      result && typeof result === "object" ? Object.keys(result).join(", ") : typeof result;
+    console.warn(
+      `   ↳ KeeperHub accepted the trigger but did not return an execution id (${keys || "empty response"})`,
+    );
   }
 
   return out;
@@ -125,8 +130,8 @@ export async function triggerRebalance({
   marketData,
   generation,
   fitnessScore,
-  workflowId,                    // optional — overrides the env var (used by auto-synth)
-  via = "webhook",               // "webhook" or "execute"
+  workflowId, // optional — overrides the env var (used by auto-synth)
+  via = "webhook", // "webhook" or "execute"
   wait = (process.env.KH_WAIT_FOR_WORKFLOW ?? "").toLowerCase() === "true",
 } = {}) {
   const id = workflowId ?? process.env.KH_REBALANCE_WORKFLOW_ID;
@@ -142,7 +147,12 @@ export async function triggerRebalance({
 
   if (!id || id === "wf_your_workflow_id_here") {
     console.log("\n⚠️  No KeeperHub workflow registered — logging payload only:");
-    console.log(JSON.stringify(payload, null, 2).split("\n").map((l) => "   " + l).join("\n"));
+    console.log(
+      JSON.stringify(payload, null, 2)
+        .split("\n")
+        .map((l) => "   " + l)
+        .join("\n"),
+    );
     return { triggered: false, payload };
   }
 
@@ -150,24 +160,31 @@ export async function triggerRebalance({
   // a direct signed URL in the UI (no org API key needed). If that URL has
   // gone stale, fall through to the authenticated workflow API below.
   if (directWebhookUrl) {
+    const webhookKey = (process.env.KH_WEBHOOK_KEY ?? "").trim();
+    const directHeaders = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "User-Agent": "evoyield-keeperhub/1.0",
+    };
+    if (webhookKey) directHeaders["X-API-Key"] = webhookKey;
     const res = await fetch(directWebhookUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "User-Agent": "evoyield-keeperhub/1.0",
-      },
+      headers: directHeaders,
       body: JSON.stringify(payload),
     });
     const text = await res.text();
     let json;
-    try { json = text ? JSON.parse(text) : {}; } catch { json = { raw: text }; }
+    try {
+      json = text ? JSON.parse(text) : {};
+    } catch {
+      json = { raw: text };
+    }
     if (res.ok) {
       return confirmExecution(json, { workflowId: id, source: "direct-webhook-url", wait });
     }
     console.warn(
       `\n⚠️  Direct KeeperHub webhook URL failed (${res.status}); ` +
-      `falling back to /workflows/${id}/webhook...`,
+        `falling back to /workflows/${id}/webhook...`,
     );
   }
 
@@ -183,10 +200,18 @@ export async function triggerRebalance({
       const webhookKey = (process.env.KH_WEBHOOK_KEY ?? "").trim();
       if (msg.includes("invalid api key format")) {
         try {
-          const result = await kh.post(PATHS.execute(id), { input: payload }, {
-            idempotencyKey: `execute:${id}:${generation}:${Date.now()}`,
+          const result = await kh.post(
+            PATHS.execute(id),
+            { input: payload },
+            {
+              idempotencyKey: `execute:${id}:${generation}:${Date.now()}`,
+            },
+          );
+          return confirmExecution(result, {
+            workflowId: id,
+            source: "execute-auth-fallback",
+            wait,
           });
-          return confirmExecution(result, { workflowId: id, source: "execute-auth-fallback", wait });
         } catch (execErr) {
           if (!(execErr instanceof KeeperHubError) || execErr.status !== 404) {
             throw execErr;
@@ -198,17 +223,21 @@ export async function triggerRebalance({
           triggered: false,
           workflowId: id,
           authFailed: true,
-          error: "KH_WEBHOOK_KEY is an organization key (kh_...). KeeperHub webhook triggers require a user webhook key (wfb_...).",
+          error:
+            "KH_WEBHOOK_KEY is an organization key (kh_...). KeeperHub webhook triggers require a user webhook key (wfb_...).",
         };
       }
       if (msg.includes("invalid api key format") && webhookKey) {
-        const base = (process.env.KEEPERHUB_API_URL ?? "https://app.keeperhub.com/api").replace(/\/+$/, "");
+        const base = (process.env.KEEPERHUB_API_URL ?? "https://app.keeperhub.com/api").replace(
+          /\/+$/,
+          "",
+        );
         const res = await fetch(`${base}${PATHS.webhook(id)}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Authorization": `Bearer ${webhookKey}`,
+            Accept: "application/json",
+            Authorization: `Bearer ${webhookKey}`,
             "X-API-Key": webhookKey,
             "User-Agent": "evoyield-keeperhub/1.0",
           },
@@ -216,7 +245,11 @@ export async function triggerRebalance({
         });
         const text = await res.text();
         let json;
-        try { json = text ? JSON.parse(text) : {}; } catch { json = { raw: text }; }
+        try {
+          json = text ? JSON.parse(text) : {};
+        } catch {
+          json = { raw: text };
+        }
         if (res.ok) {
           return confirmExecution(json, { workflowId: id, source: "webhook-key", wait });
         }
