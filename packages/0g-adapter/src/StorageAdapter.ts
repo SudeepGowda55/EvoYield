@@ -43,6 +43,17 @@ export interface StorageAdapterConfig {
   localMode?: boolean;
   /** Path to JSON persistence file. Defaults to .evoframe-cache.json in cwd */
   localCachePath?: string;
+  /**
+   * Optional callback that queries the on-chain SkillRegistry for the 0G
+   * rootHash of a skill by its UUID.  When provided, fetchGenome() will call
+   * this for `skill:<uuid>` keys whose rootHash is absent from the local
+   * hashIndex — making the chain the authoritative source and eliminating the
+   * hard dependency on .evoframe-cache.json for blob retrieval.
+   *
+   * Wire it up via ISkillRegistryAdapter.getStorageHash:
+   *   chainRootHashLookup: (id) => registryAdapter.getStorageHash(id)
+   */
+  chainRootHashLookup?: (skillId: string) => Promise<string | null>;
 }
 
 interface LocalCache {
@@ -170,9 +181,24 @@ export class StorageAdapter implements IStorageAdapter {
   async fetchGenome(storageKey: string): Promise<SkillGenome | null> {
     await this.init();
 
-    // Try live 0G Storage if we have the rootHash for this key
+    // Try live 0G Storage if we have (or can look up) the rootHash for this key
     if (this.liveReady) {
-      const rootHash = this.hashIndex.get(storageKey);
+      let rootHash = this.hashIndex.get(storageKey) ?? null;
+
+      // Chain-based lookup: when the local hashIndex has no entry for a
+      // `skill:<uuid>` key, query the on-chain registry instead of giving up.
+      // This eliminates the hard dependency on .evoframe-cache.json for blob
+      // retrieval — the OG chain becomes the source of truth for rootHashes.
+      if (!rootHash && this.config.chainRootHashLookup && storageKey.startsWith("skill:")) {
+        const skillId = storageKey.slice("skill:".length);
+        rootHash = await this.config.chainRootHashLookup(skillId);
+        if (rootHash) {
+          console.log(`  🔗 0G Chain rootHash resolved for ${storageKey}: ${rootHash.slice(0, 20)}…`);
+          this.hashIndex.set(storageKey, rootHash);
+          this.saveLocalCache();
+        }
+      }
+
       if (rootHash) {
         try {
           const json = await this.zgDownload(rootHash);

@@ -39,9 +39,19 @@ export interface IComputeAdapter {
 }
 
 export interface ISkillRegistryAdapter {
-  register(genome: SkillGenome): Promise<string>; // returns tx hash
+  /**
+   * Register a genome on-chain.
+   * storageHash should be the actual 0G Storage rootHash so the chain acts as
+   * the authoritative index for blob retrieval (no dependency on local cache).
+   */
+  register(genome: SkillGenome, storageHash?: string): Promise<string>; // returns tx hash
   getTopSkills(domain: string, limit: number): Promise<SkillGenome[]>;
   recordUsage(skillId: SkillId, agentAddress: string): Promise<void>;
+  /**
+   * Query the on-chain registry for the 0G Storage rootHash of a skill.
+   * Returns null when the chain is unavailable or the skill is not registered.
+   */
+  getStorageHash(skillId: SkillId): Promise<string | null>;
 }
 
 export interface MutationCandidate {
@@ -213,9 +223,20 @@ export class EvolutionEngine {
     });
 
     // 5. Register on-chain if configured
+    // Pass the actual 0G rootHash so the chain becomes the authoritative source
+    // for blob retrieval — no dependency on .evoframe-cache.json hashIndex.
     if (this.config.autoRegisterOnChain !== false) {
-      const txHash = await this.registry.register(promoted);
+      const txHash = await this.registry.register(promoted, storageHash);
       promoted.onChainTxHash = txHash;
+
+      // Persist the tx hash back to storage — storeGenome() was called earlier
+      // before the tx hash existed, so we need a second write to record it.
+      await this.storage.storeGenome(promoted);
+      const stableWithTx = {
+        ...promoted,
+        storageKey: `skill-name:${this.config.agentName}:${promoted.name}`,
+      };
+      await this.storage.storeGenome(stableWithTx);
 
       this.emit("skill_registered_onchain", promoted.id, { txHash });
     }

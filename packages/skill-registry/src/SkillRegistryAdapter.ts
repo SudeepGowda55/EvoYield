@@ -142,7 +142,7 @@ export class SkillRegistryAdapter implements ISkillRegistryAdapter {
   // ISkillRegistryAdapter implementation
   // ---------------------------------------------------------------------------
 
-  async register(genome: SkillGenome): Promise<string> {
+  async register(genome: SkillGenome, storageHash?: string): Promise<string> {
     // Local mode fallback
     if (this.config.localMode || !this.config.walletClient) {
       this.localStore.set(genome.id, genome);
@@ -154,6 +154,10 @@ export class SkillRegistryAdapter implements ISkillRegistryAdapter {
       ? this.uuidToBytes32(genome.parentId)
       : (("0x" + "00".repeat(32)) as `0x${string}`);
 
+    // Prefer the actual 0G rootHash so the chain becomes the authoritative
+    // source for blob retrieval.  Fall back to storageKey for backwards compat.
+    const onChainStorageHash = storageHash ?? genome.storageKey;
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const hash = await (this.config.walletClient.writeContract as any)({
       address: this.config.contractAddress as Address,
@@ -162,7 +166,7 @@ export class SkillRegistryAdapter implements ISkillRegistryAdapter {
       args: [
         skillId32,
         parentId32,
-        genome.storageKey,
+        onChainStorageHash,
         genome.name,
         DOMAIN_MAP[genome.domain],
         genome.generation,
@@ -171,6 +175,26 @@ export class SkillRegistryAdapter implements ISkillRegistryAdapter {
     });
 
     return hash as string;
+  }
+
+  /**
+   * Query the on-chain registry for the 0G Storage rootHash of a registered skill.
+   * Returns null in local mode, when the chain is unreachable, or when the skill
+   * has not been registered yet.
+   */
+  async getStorageHash(skillId: string): Promise<string | null> {
+    if (this.config.localMode || !this.config.publicClient) return null;
+
+    try {
+      const skillId32 = this.uuidToBytes32(skillId);
+      const entry = await this.fetchSkillEntry(skillId32);
+      if (!entry) return null;
+      // fetchSkillEntry maps on-chain storageHash → genome.storageKey
+      // After the fix above, storageKey now holds the actual 0G rootHash.
+      return entry.storageKey ?? null;
+    } catch {
+      return null;
+    }
   }
 
   async getTopSkills(domain: SkillDomain, limit: number): Promise<SkillGenome[]> {

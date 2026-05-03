@@ -66,7 +66,29 @@
       "fitnessScore": 100,
       "domain": "defi",
       "broadcastAt": 1777737779231
+    },
+    {
+      "skillId": "ab96df38-c579-41d6-8601-b6ec279269c6",
+      "name": "yield-allocator",
+      "agentId": "EvoYield-v1",
+      "rootHash": "b9246554af369846d05f23d0e9c317e7697ddc4a16e574780bf7f7c3031028b6",
+      "storageKey": "skill-name:EvoYield-v1:yield-allocator",
+      "generation": 8,
+      "fitnessScore": 100,
+      "domain": "defi",
+      "broadcastAt": 1777798819516
+    },
+    {
+      "skillId": "3dc88269-9721-40f9-ac49-c4f290e40640",
+      "name": "yield-allocator",
+      "agentId": "EvoYield-v1",
+      "rootHash": "46085292471e802175534dc4d0429d75f07d8de6eead4c8ac4e1ea67afa55ef1",
+      "storageKey": "skill-name:EvoYield-v1:yield-allocator",
+      "generation": 10,
+      "fitnessScore": 100,
+      "domain": "defi",
+      "broadcastAt": 1777799451702
     }
   ],
-  "updatedAt": 1777737779232
+  "updatedAt": 1777799451703
 }

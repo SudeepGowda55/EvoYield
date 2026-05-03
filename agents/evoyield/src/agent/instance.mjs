@@ -95,7 +95,23 @@ function buildAgent() {
     console.log(`  ⛓  0G Chain: on-chain registration enabled (${registryAddress})`);
   }
 
+  // ── SkillRegistry adapter ──────────────────────────────────────────
+  // Built first so we can pass chainRootHashLookup into StorageAdapter below.
+  const registryAdapter = new SkillRegistryAdapter(
+    hasChain
+      ? {
+          contractAddress: registryAddress,
+          agentAddress,
+          walletClient,
+          publicClient,
+        }
+      : { localMode: true },
+  );
+
   // ── 0G Storage adapter ─────────────────────────────────────────────
+  // When the chain is available, wire chainRootHashLookup so fetchGenome()
+  // can resolve a 0G rootHash from the on-chain SkillRegistry instead of
+  // depending solely on the local .evoframe-cache.json hashIndex.
   const storageAdapter = new StorageAdapter(
     hasStorage
       ? {
@@ -103,6 +119,9 @@ function buildAgent() {
           chainRpcUrl: chainRpc,
           privateKey,
           localCachePath: resolve(ROOT, ".evoframe-cache.json"),
+          chainRootHashLookup: hasChain
+            ? (skillId) => registryAdapter.getStorageHash(skillId)
+            : undefined,
         }
       : {
           localMode: true,
@@ -123,18 +142,6 @@ function buildAgent() {
           localMode: true,
           localManifestPath: resolve(ROOT, ".evoframe-broadcast.json"),
         },
-  );
-
-  // ── SkillRegistry adapter ──────────────────────────────────────────
-  const registryAdapter = new SkillRegistryAdapter(
-    hasChain
-      ? {
-          contractAddress: registryAddress,
-          agentAddress,
-          walletClient,
-          publicClient,
-        }
-      : { localMode: true },
   );
 
   return new EvoYieldAgent(
