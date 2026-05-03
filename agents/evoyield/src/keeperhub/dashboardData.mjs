@@ -94,7 +94,7 @@ export async function publishDashboardRun({ marketData, result, khResult, rebala
 
   const workflowResult = extractWorkflowResult(khResult);
   const transaction = extractTransaction(khResult);
-  const poolUsdc = Number(workflowResult?.poolUsdc ?? rebalance?.poolUsdc ?? 1);
+  const poolUsdc = Number(rebalance?.poolUsdc ?? workflowResult?.poolUsdc ?? 1);
   const targetAllocation = normalizeAllocation(workflowResult?.targetAllocation ?? result?.allocation);
   const previousAllocation = normalizeAllocation(workflowResult?.previousAllocation ?? rebalance?.previousAllocation);
   const targetAmounts = workflowResult?.targetAmounts ?? amountsFromAllocation(targetAllocation, poolUsdc);

@@ -16,8 +16,9 @@ const sepoliaUsdc =
   process.env.SEPOLIA_USDC_ADDRESS ??
   "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
 const rebalancerAddress = process.env.EVOYIELD_REBALANCER_ADDRESS ?? "0xcaD4CE47becA13D10F885E0e78714c21FD6c1165";
-const poolUsdc = process.env.EVOYIELD_TEST_POOL_USDC ?? "0.1";
+const poolUsdc = process.env.EVOYIELD_TEST_POOL_USDC ?? "60.1";
 const poolAssetsRaw = String(Math.round(Number(poolUsdc) * 1_000_000));
+const computeLabel = `Compute ${poolUsdc} USDC Vault Rebalance`;
 const protocolTargets = {
   aave: process.env.EVOYIELD_AAVE_VAULT ?? "0x02b5e71D8C0D1e0C76EF66A7bA6bB58201363BB3",
   morpho: process.env.EVOYIELD_MORPHO_VAULT ?? "0x0e2bb0C5802A1dDd4D56AB89bfC7f20732D91B5c",
@@ -102,7 +103,7 @@ return {
   deltas,
   generation: payload?.generation,
   fitnessScore: payload?.fitnessScore,
-  note: 'This workflow manages exactly 0.1 Sepolia USDC through EvoYieldRebalancer.rebalanceAmountToTargets.',
+  note: 'This workflow manages exactly ${poolUsdc} Sepolia USDC through EvoYieldRebalancer.rebalanceAmountToTargets.',
 };
 `.trim();
 
@@ -164,7 +165,7 @@ const nodes = [
     position: { x: 320, y: 0 },
     data: {
       type: "action",
-      label: "Compute 0.1 USDC Vault Rebalance",
+      label: computeLabel,
       description: "Computes vault target BPS and raw 6-decimal USDC amount",
       config: { actionType: "code/run-code", code, timeout: 60 },
     },
@@ -179,10 +180,10 @@ const nodes = [
     abi: rebalanceAbi,
     functionArgs: JSON.stringify([
       poolAssetsRaw,
-      "{{@compute-usdc-rebalance:Compute 0.1 USDC Vault Rebalance.result.aaveBps}}",
-      "{{@compute-usdc-rebalance:Compute 0.1 USDC Vault Rebalance.result.morphoBps}}",
-      "{{@compute-usdc-rebalance:Compute 0.1 USDC Vault Rebalance.result.yearnBps}}",
-      "{{@compute-usdc-rebalance:Compute 0.1 USDC Vault Rebalance.result.skyBps}}",
+      `{{@compute-usdc-rebalance:${computeLabel}.result.aaveBps}}`,
+      `{{@compute-usdc-rebalance:${computeLabel}.result.morphoBps}}`,
+      `{{@compute-usdc-rebalance:${computeLabel}.result.yearnBps}}`,
+      `{{@compute-usdc-rebalance:${computeLabel}.result.skyBps}}`,
     ]),
   }),
 ];
@@ -203,7 +204,7 @@ const res = await fetch(`${base}/workflows/${encodeURIComponent(workflowId)}`, {
   body: JSON.stringify({
     name: "EvoYield Sepolia USDC Rebalancer",
     description:
-      "Receives EvoYield allocation and rebalances exactly 0.1 Sepolia USDC across mock vaults.",
+      `Receives EvoYield allocation and rebalances exactly ${poolUsdc} Sepolia USDC across mock vaults.`,
     nodes,
     edges,
     enabled: true,

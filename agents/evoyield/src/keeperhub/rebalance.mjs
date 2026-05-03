@@ -167,6 +167,8 @@ export async function triggerRebalance({
     const morphoBps = Math.floor((allocation.morpho || 0) * 100);
     const yearnBps = Math.floor((allocation.yearn || 0) * 100);
     const skyBps = Math.floor((allocation.sky || 0) * 100);
+    const poolUsdc = Number(rebalance?.poolUsdc ?? process.env.EVOYIELD_TEST_POOL_USDC ?? 60.1);
+    const poolAssetsRaw = String(Math.round(poolUsdc * 1_000_000));
     
     let patched = false;
     let newNodes = wf?.nodes;
@@ -181,6 +183,7 @@ export async function triggerRebalance({
           } catch(e) {}
           
           if (Array.isArray(args) && args.length === 5) {
+             args[0] = poolAssetsRaw;
              args[1] = aaveBps.toString();
              args[2] = morphoBps.toString();
              args[3] = yearnBps.toString();
@@ -192,12 +195,13 @@ export async function triggerRebalance({
              args.morphoBps = morphoBps.toString();
              args.yearnBps = yearnBps.toString();
              args.skyBps = skyBps.toString();
+             args.poolAssets = poolAssetsRaw;
              config.functionArgs = JSON.stringify(args);
              patched = true;
           } else {
              // Fallback if the previous parsing was weird
              config.functionArgs = JSON.stringify({
-                poolAssets: "100000",
+                poolAssets: poolAssetsRaw,
                 aaveBps: aaveBps.toString(),
                 morphoBps: morphoBps.toString(),
                 yearnBps: yearnBps.toString(),
@@ -210,7 +214,7 @@ export async function triggerRebalance({
     }
     
     if (patched) {
-      console.log(`   ↳ Auto-patching workflow ${id} write node with static BPS: aave=${aaveBps}, morpho=${morphoBps}, yearn=${yearnBps}, sky=${skyBps}`);
+      console.log(`   ↳ Auto-patching workflow ${id} write node with ${poolUsdc} USDC and static BPS: aave=${aaveBps}, morpho=${morphoBps}, yearn=${yearnBps}, sky=${skyBps}`);
       await kh.patch(`/workflows/${encodeURIComponent(id)}`, { nodes: newNodes });
     }
   } catch (err) {
