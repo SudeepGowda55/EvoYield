@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-03T09:57:03.533Z",
+  "generatedAt": "2026-05-03T10:44:12.403Z",
   "agent": "EvoYield-v1",
   "chain": "Ethereum Sepolia",
   "wallet": "0x06de353DDb9C102Cda81eDc8A535B88DFd1F7C08",
@@ -18,10 +18,10 @@
     "name": "EvoYield Sepolia USDC Rebalancer"
   },
   "marketData": {
-    "timestamp": "2026-05-03T09:57:03.533Z",
-    "aave_apy": 3.54,
-    "morpho_apy": 3.79,
-    "yearn_apy": 3.68,
+    "timestamp": "2026-05-03T10:44:12.404Z",
+    "aave_apy": 3.58,
+    "morpho_apy": 3.78,
+    "yearn_apy": 3.69,
     "sky_apy": 0
   },
   "freshAllocation": {
@@ -76,8 +76,8 @@
     ]
   },
   "rebalance": {
-    "timestamp": "2026-05-03T09:56:49.186Z",
-    "executionId": "4f25xed1a58ugm9hjkeea",
+    "timestamp": "2026-05-03T10:43:33.095Z",
+    "executionId": "990mehc1sd5ynpfpvpnb5",
     "mode": "rebalance",
     "previousAllocation": {
       "aave": 15,
@@ -113,11 +113,11 @@
         "deltaUsdc": 0,
         "action": "hold",
         "transaction": {
-          "hash": "0x04b3f7b725d6b578bb2b5f4c39f454b8fb47ebb521eadcd9050f4eea839def5b",
-          "url": "https://sepolia.etherscan.io/tx/0x04b3f7b725d6b578bb2b5f4c39f454b8fb47ebb521eadcd9050f4eea839def5b",
+          "hash": "0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
+          "url": "https://sepolia.etherscan.io/tx/0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
           "status": "success",
           "gasUsedUnits": "59247",
-          "effectiveGasPrice": "100027706"
+          "effectiveGasPrice": "100091130"
         }
       },
       {
@@ -129,11 +129,11 @@
         "deltaUsdc": 0,
         "action": "hold",
         "transaction": {
-          "hash": "0x04b3f7b725d6b578bb2b5f4c39f454b8fb47ebb521eadcd9050f4eea839def5b",
-          "url": "https://sepolia.etherscan.io/tx/0x04b3f7b725d6b578bb2b5f4c39f454b8fb47ebb521eadcd9050f4eea839def5b",
+          "hash": "0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
+          "url": "https://sepolia.etherscan.io/tx/0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
           "status": "success",
           "gasUsedUnits": "59247",
-          "effectiveGasPrice": "100027706"
+          "effectiveGasPrice": "100091130"
         }
       },
       {
@@ -145,11 +145,11 @@
         "deltaUsdc": 0,
         "action": "hold",
         "transaction": {
-          "hash": "0x04b3f7b725d6b578bb2b5f4c39f454b8fb47ebb521eadcd9050f4eea839def5b",
-          "url": "https://sepolia.etherscan.io/tx/0x04b3f7b725d6b578bb2b5f4c39f454b8fb47ebb521eadcd9050f4eea839def5b",
+          "hash": "0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
+          "url": "https://sepolia.etherscan.io/tx/0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
           "status": "success",
           "gasUsedUnits": "59247",
-          "effectiveGasPrice": "100027706"
+          "effectiveGasPrice": "100091130"
         }
       },
       {
@@ -161,20 +161,20 @@
         "deltaUsdc": 0,
         "action": "hold",
         "transaction": {
-          "hash": "0x04b3f7b725d6b578bb2b5f4c39f454b8fb47ebb521eadcd9050f4eea839def5b",
-          "url": "https://sepolia.etherscan.io/tx/0x04b3f7b725d6b578bb2b5f4c39f454b8fb47ebb521eadcd9050f4eea839def5b",
+          "hash": "0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
+          "url": "https://sepolia.etherscan.io/tx/0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
           "status": "success",
           "gasUsedUnits": "59247",
-          "effectiveGasPrice": "100027706"
+          "effectiveGasPrice": "100091130"
         }
       }
     ],
     "transaction": {
-      "hash": "0x04b3f7b725d6b578bb2b5f4c39f454b8fb47ebb521eadcd9050f4eea839def5b",
-      "url": "https://sepolia.etherscan.io/tx/0x04b3f7b725d6b578bb2b5f4c39f454b8fb47ebb521eadcd9050f4eea839def5b",
+      "hash": "0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
+      "url": "https://sepolia.etherscan.io/tx/0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
       "status": "success",
       "gasUsedUnits": "59247",
-      "effectiveGasPrice": "100027706"
+      "effectiveGasPrice": "100091130"
     },
     "protocolTargets": {
       "aave": "0x02b5e71D8C0D1e0C76EF66A7bA6bB58201363BB3",
@@ -1756,6 +1756,386 @@
         "status": "success",
         "gasUsedUnits": "59247",
         "effectiveGasPrice": "100027706"
+      },
+      "previousExpectedApy": 3.53,
+      "expectedApy": 3.53,
+      "expectedApyLift": 0,
+      "summary": "No USDC movement was needed because the target allocation matched the current pool."
+    },
+    {
+      "label": "Gen 11 hold check",
+      "timestamp": "2026-05-03T10:28:43.873Z",
+      "type": "rebalance",
+      "executionId": "5vcbo3i8m0y8lyaaylfeb",
+      "previousAllocation": {
+        "aave": 15,
+        "morpho": 50,
+        "yearn": 30,
+        "sky": 5
+      },
+      "allocation": {
+        "aave": 15,
+        "morpho": 50,
+        "yearn": 30,
+        "sky": 5
+      },
+      "deltas": [
+        {
+          "protocol": "aave",
+          "previousPct": 15,
+          "targetPct": 15,
+          "previousAmountUsdc": 0.015,
+          "targetAmountUsdc": 0.015,
+          "deltaUsdc": 0,
+          "action": "hold",
+          "transaction": {
+            "hash": "0x7f806c60050b28aa9521d2cfed619983c71eb4a6a10c95eadd3bc13102c2f8f8",
+            "url": "https://sepolia.etherscan.io/tx/0x7f806c60050b28aa9521d2cfed619983c71eb4a6a10c95eadd3bc13102c2f8f8",
+            "status": "success",
+            "gasUsedUnits": "59247",
+            "effectiveGasPrice": "100116888"
+          }
+        },
+        {
+          "protocol": "morpho",
+          "previousPct": 50,
+          "targetPct": 50,
+          "previousAmountUsdc": 0.05,
+          "targetAmountUsdc": 0.05,
+          "deltaUsdc": 0,
+          "action": "hold",
+          "transaction": {
+            "hash": "0x7f806c60050b28aa9521d2cfed619983c71eb4a6a10c95eadd3bc13102c2f8f8",
+            "url": "https://sepolia.etherscan.io/tx/0x7f806c60050b28aa9521d2cfed619983c71eb4a6a10c95eadd3bc13102c2f8f8",
+            "status": "success",
+            "gasUsedUnits": "59247",
+            "effectiveGasPrice": "100116888"
+          }
+        },
+        {
+          "protocol": "yearn",
+          "previousPct": 30,
+          "targetPct": 30,
+          "previousAmountUsdc": 0.03,
+          "targetAmountUsdc": 0.03,
+          "deltaUsdc": 0,
+          "action": "hold",
+          "transaction": {
+            "hash": "0x7f806c60050b28aa9521d2cfed619983c71eb4a6a10c95eadd3bc13102c2f8f8",
+            "url": "https://sepolia.etherscan.io/tx/0x7f806c60050b28aa9521d2cfed619983c71eb4a6a10c95eadd3bc13102c2f8f8",
+            "status": "success",
+            "gasUsedUnits": "59247",
+            "effectiveGasPrice": "100116888"
+          }
+        },
+        {
+          "protocol": "sky",
+          "previousPct": 5,
+          "targetPct": 5,
+          "previousAmountUsdc": 0.005,
+          "targetAmountUsdc": 0.005,
+          "deltaUsdc": 0,
+          "action": "hold",
+          "transaction": {
+            "hash": "0x7f806c60050b28aa9521d2cfed619983c71eb4a6a10c95eadd3bc13102c2f8f8",
+            "url": "https://sepolia.etherscan.io/tx/0x7f806c60050b28aa9521d2cfed619983c71eb4a6a10c95eadd3bc13102c2f8f8",
+            "status": "success",
+            "gasUsedUnits": "59247",
+            "effectiveGasPrice": "100116888"
+          }
+        }
+      ],
+      "transaction": {
+        "hash": "0x7f806c60050b28aa9521d2cfed619983c71eb4a6a10c95eadd3bc13102c2f8f8",
+        "url": "https://sepolia.etherscan.io/tx/0x7f806c60050b28aa9521d2cfed619983c71eb4a6a10c95eadd3bc13102c2f8f8",
+        "status": "success",
+        "gasUsedUnits": "59247",
+        "effectiveGasPrice": "100116888"
+      },
+      "previousExpectedApy": 3.53,
+      "expectedApy": 3.53,
+      "expectedApyLift": 0,
+      "summary": "No USDC movement was needed because the target allocation matched the current pool."
+    },
+    {
+      "label": "Gen 11 hold check",
+      "timestamp": "2026-05-03T10:32:01.445Z",
+      "type": "rebalance",
+      "executionId": "aabgnzfjylo1hbohp291w",
+      "previousAllocation": {
+        "aave": 15,
+        "morpho": 50,
+        "yearn": 30,
+        "sky": 5
+      },
+      "allocation": {
+        "aave": 15,
+        "morpho": 50,
+        "yearn": 30,
+        "sky": 5
+      },
+      "deltas": [
+        {
+          "protocol": "aave",
+          "previousPct": 15,
+          "targetPct": 15,
+          "previousAmountUsdc": 0.015,
+          "targetAmountUsdc": 0.015,
+          "deltaUsdc": 0,
+          "action": "hold",
+          "transaction": {
+            "hash": "0x86e6ce68c1fd0a4c032c7cc8cd2bf84516239b24fab1eb685fc8a5ea3043d46b",
+            "url": "https://sepolia.etherscan.io/tx/0x86e6ce68c1fd0a4c032c7cc8cd2bf84516239b24fab1eb685fc8a5ea3043d46b",
+            "status": "success",
+            "gasUsedUnits": "59247",
+            "effectiveGasPrice": "100127549"
+          }
+        },
+        {
+          "protocol": "morpho",
+          "previousPct": 50,
+          "targetPct": 50,
+          "previousAmountUsdc": 0.05,
+          "targetAmountUsdc": 0.05,
+          "deltaUsdc": 0,
+          "action": "hold",
+          "transaction": {
+            "hash": "0x86e6ce68c1fd0a4c032c7cc8cd2bf84516239b24fab1eb685fc8a5ea3043d46b",
+            "url": "https://sepolia.etherscan.io/tx/0x86e6ce68c1fd0a4c032c7cc8cd2bf84516239b24fab1eb685fc8a5ea3043d46b",
+            "status": "success",
+            "gasUsedUnits": "59247",
+            "effectiveGasPrice": "100127549"
+          }
+        },
+        {
+          "protocol": "yearn",
+          "previousPct": 30,
+          "targetPct": 30,
+          "previousAmountUsdc": 0.03,
+          "targetAmountUsdc": 0.03,
+          "deltaUsdc": 0,
+          "action": "hold",
+          "transaction": {
+            "hash": "0x86e6ce68c1fd0a4c032c7cc8cd2bf84516239b24fab1eb685fc8a5ea3043d46b",
+            "url": "https://sepolia.etherscan.io/tx/0x86e6ce68c1fd0a4c032c7cc8cd2bf84516239b24fab1eb685fc8a5ea3043d46b",
+            "status": "success",
+            "gasUsedUnits": "59247",
+            "effectiveGasPrice": "100127549"
+          }
+        },
+        {
+          "protocol": "sky",
+          "previousPct": 5,
+          "targetPct": 5,
+          "previousAmountUsdc": 0.005,
+          "targetAmountUsdc": 0.005,
+          "deltaUsdc": 0,
+          "action": "hold",
+          "transaction": {
+            "hash": "0x86e6ce68c1fd0a4c032c7cc8cd2bf84516239b24fab1eb685fc8a5ea3043d46b",
+            "url": "https://sepolia.etherscan.io/tx/0x86e6ce68c1fd0a4c032c7cc8cd2bf84516239b24fab1eb685fc8a5ea3043d46b",
+            "status": "success",
+            "gasUsedUnits": "59247",
+            "effectiveGasPrice": "100127549"
+          }
+        }
+      ],
+      "transaction": {
+        "hash": "0x86e6ce68c1fd0a4c032c7cc8cd2bf84516239b24fab1eb685fc8a5ea3043d46b",
+        "url": "https://sepolia.etherscan.io/tx/0x86e6ce68c1fd0a4c032c7cc8cd2bf84516239b24fab1eb685fc8a5ea3043d46b",
+        "status": "success",
+        "gasUsedUnits": "59247",
+        "effectiveGasPrice": "100127549"
+      },
+      "previousExpectedApy": 3.53,
+      "expectedApy": 3.53,
+      "expectedApyLift": 0,
+      "summary": "No USDC movement was needed because the target allocation matched the current pool."
+    },
+    {
+      "label": "Gen 11 hold check",
+      "timestamp": "2026-05-03T10:41:39.842Z",
+      "type": "rebalance",
+      "executionId": "whk6af0rjj08fbl6uryfw",
+      "previousAllocation": {
+        "aave": 15,
+        "morpho": 50,
+        "yearn": 30,
+        "sky": 5
+      },
+      "allocation": {
+        "aave": 15,
+        "morpho": 50,
+        "yearn": 30,
+        "sky": 5
+      },
+      "deltas": [
+        {
+          "protocol": "aave",
+          "previousPct": 15,
+          "targetPct": 15,
+          "previousAmountUsdc": 0.015,
+          "targetAmountUsdc": 0.015,
+          "deltaUsdc": 0,
+          "action": "hold",
+          "transaction": {
+            "hash": "0xc51213212566ab815a762a304bb727dce5ff9386e1a6c81b0eb65dbfce25c528",
+            "url": "https://sepolia.etherscan.io/tx/0xc51213212566ab815a762a304bb727dce5ff9386e1a6c81b0eb65dbfce25c528",
+            "status": "success",
+            "gasUsedUnits": "59247",
+            "effectiveGasPrice": "100111949"
+          }
+        },
+        {
+          "protocol": "morpho",
+          "previousPct": 50,
+          "targetPct": 50,
+          "previousAmountUsdc": 0.05,
+          "targetAmountUsdc": 0.05,
+          "deltaUsdc": 0,
+          "action": "hold",
+          "transaction": {
+            "hash": "0xc51213212566ab815a762a304bb727dce5ff9386e1a6c81b0eb65dbfce25c528",
+            "url": "https://sepolia.etherscan.io/tx/0xc51213212566ab815a762a304bb727dce5ff9386e1a6c81b0eb65dbfce25c528",
+            "status": "success",
+            "gasUsedUnits": "59247",
+            "effectiveGasPrice": "100111949"
+          }
+        },
+        {
+          "protocol": "yearn",
+          "previousPct": 30,
+          "targetPct": 30,
+          "previousAmountUsdc": 0.03,
+          "targetAmountUsdc": 0.03,
+          "deltaUsdc": 0,
+          "action": "hold",
+          "transaction": {
+            "hash": "0xc51213212566ab815a762a304bb727dce5ff9386e1a6c81b0eb65dbfce25c528",
+            "url": "https://sepolia.etherscan.io/tx/0xc51213212566ab815a762a304bb727dce5ff9386e1a6c81b0eb65dbfce25c528",
+            "status": "success",
+            "gasUsedUnits": "59247",
+            "effectiveGasPrice": "100111949"
+          }
+        },
+        {
+          "protocol": "sky",
+          "previousPct": 5,
+          "targetPct": 5,
+          "previousAmountUsdc": 0.005,
+          "targetAmountUsdc": 0.005,
+          "deltaUsdc": 0,
+          "action": "hold",
+          "transaction": {
+            "hash": "0xc51213212566ab815a762a304bb727dce5ff9386e1a6c81b0eb65dbfce25c528",
+            "url": "https://sepolia.etherscan.io/tx/0xc51213212566ab815a762a304bb727dce5ff9386e1a6c81b0eb65dbfce25c528",
+            "status": "success",
+            "gasUsedUnits": "59247",
+            "effectiveGasPrice": "100111949"
+          }
+        }
+      ],
+      "transaction": {
+        "hash": "0xc51213212566ab815a762a304bb727dce5ff9386e1a6c81b0eb65dbfce25c528",
+        "url": "https://sepolia.etherscan.io/tx/0xc51213212566ab815a762a304bb727dce5ff9386e1a6c81b0eb65dbfce25c528",
+        "status": "success",
+        "gasUsedUnits": "59247",
+        "effectiveGasPrice": "100111949"
+      },
+      "previousExpectedApy": 3.53,
+      "expectedApy": 3.53,
+      "expectedApyLift": 0,
+      "summary": "No USDC movement was needed because the target allocation matched the current pool."
+    },
+    {
+      "label": "Gen 11 hold check",
+      "timestamp": "2026-05-03T10:43:33.095Z",
+      "type": "rebalance",
+      "executionId": "990mehc1sd5ynpfpvpnb5",
+      "previousAllocation": {
+        "aave": 15,
+        "morpho": 50,
+        "yearn": 30,
+        "sky": 5
+      },
+      "allocation": {
+        "aave": 15,
+        "morpho": 50,
+        "yearn": 30,
+        "sky": 5
+      },
+      "deltas": [
+        {
+          "protocol": "aave",
+          "previousPct": 15,
+          "targetPct": 15,
+          "previousAmountUsdc": 0.015,
+          "targetAmountUsdc": 0.015,
+          "deltaUsdc": 0,
+          "action": "hold",
+          "transaction": {
+            "hash": "0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
+            "url": "https://sepolia.etherscan.io/tx/0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
+            "status": "success",
+            "gasUsedUnits": "59247",
+            "effectiveGasPrice": "100091130"
+          }
+        },
+        {
+          "protocol": "morpho",
+          "previousPct": 50,
+          "targetPct": 50,
+          "previousAmountUsdc": 0.05,
+          "targetAmountUsdc": 0.05,
+          "deltaUsdc": 0,
+          "action": "hold",
+          "transaction": {
+            "hash": "0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
+            "url": "https://sepolia.etherscan.io/tx/0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
+            "status": "success",
+            "gasUsedUnits": "59247",
+            "effectiveGasPrice": "100091130"
+          }
+        },
+        {
+          "protocol": "yearn",
+          "previousPct": 30,
+          "targetPct": 30,
+          "previousAmountUsdc": 0.03,
+          "targetAmountUsdc": 0.03,
+          "deltaUsdc": 0,
+          "action": "hold",
+          "transaction": {
+            "hash": "0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
+            "url": "https://sepolia.etherscan.io/tx/0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
+            "status": "success",
+            "gasUsedUnits": "59247",
+            "effectiveGasPrice": "100091130"
+          }
+        },
+        {
+          "protocol": "sky",
+          "previousPct": 5,
+          "targetPct": 5,
+          "previousAmountUsdc": 0.005,
+          "targetAmountUsdc": 0.005,
+          "deltaUsdc": 0,
+          "action": "hold",
+          "transaction": {
+            "hash": "0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
+            "url": "https://sepolia.etherscan.io/tx/0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
+            "status": "success",
+            "gasUsedUnits": "59247",
+            "effectiveGasPrice": "100091130"
+          }
+        }
+      ],
+      "transaction": {
+        "hash": "0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
+        "url": "https://sepolia.etherscan.io/tx/0x9e9d581f96f81dcc35afe9b4110dd2428e11af7ae4fc9c62a0654627c931f7f9",
+        "status": "success",
+        "gasUsedUnits": "59247",
+        "effectiveGasPrice": "100091130"
       },
       "previousExpectedApy": 3.53,
       "expectedApy": 3.53,
