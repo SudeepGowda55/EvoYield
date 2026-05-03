@@ -29,7 +29,8 @@ const ZG_CHAIN = {
 
 let agent = null;
 let _ready = false;
-let _da = null; // DAAdapter singleton for broadcasts
+let _da = null;           // DAAdapter singleton for broadcasts
+let _storage = null;      // StorageAdapter singleton (exposed for dashboard uploads)
 
 function rankedAllocation(marketData) {
   const yields = [
@@ -144,6 +145,8 @@ function buildAgent() {
         },
   );
 
+  _storage = storageAdapter;
+
   return new EvoYieldAgent(
     {
       agentName: "EvoYield-v1",
@@ -253,4 +256,9 @@ export async function forceRegenerate(reason = "external regeneration trigger") 
 /** Returns the DAAdapter singleton (for external broadcast/discover calls) */
 export function getDAAdapter() {
   return _da;
+}
+
+/** Returns the StorageAdapter singleton (for dashboard blob uploads etc.) */
+export function getStorageAdapter() {
+  return _storage;
 }

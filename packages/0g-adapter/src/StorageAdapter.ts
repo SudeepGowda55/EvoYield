@@ -266,6 +266,62 @@ export class StorageAdapter implements IStorageAdapter {
   }
 
   // ---------------------------------------------------------------------------
+  // Generic blob store/fetch — for arbitrary JSON (dashboard data, manifests…)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Upload any string content to 0G Storage under a named key.
+   * The local KV cache is always updated; 0G upload happens when live.
+   * Returns the 0G rootHash (or a local content-hash in local mode).
+   */
+  async storeBlob(storageKey: string, content: string): Promise<string> {
+    await this.init();
+    this.localKv.set(storageKey, content);
+
+    if (this.liveReady) {
+      try {
+        const rootHash = await this.zgUpload(content);
+        this.hashIndex.set(storageKey, rootHash);
+        this.saveLocalCache();
+        console.log(`  📦 0G Storage ↑ ${storageKey} → ${rootHash.slice(0, 20)}…`);
+        return rootHash;
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn(`  ⚠️  0G Storage blob upload failed (${msg}) — stored locally only`);
+      }
+    }
+
+    this.saveLocalCache();
+    return this.contentHash(content);
+  }
+
+  /**
+   * Fetch content stored under a named key.
+   * Tries live 0G Storage first (using the cached rootHash), falls back to
+   * local KV cache. Returns null if the key has never been stored.
+   */
+  async fetchBlob(storageKey: string): Promise<string | null> {
+    await this.init();
+
+    if (this.liveReady) {
+      const rootHash = this.hashIndex.get(storageKey) ?? null;
+      if (rootHash) {
+        try {
+          const content = await this.zgDownload(rootHash);
+          this.localKv.set(storageKey, content);
+          this.saveLocalCache();
+          return content;
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.warn(`  ⚠️  0G Storage blob fetch failed, using local cache: ${msg}`);
+        }
+      }
+    }
+
+    return this.localKv.get(storageKey) ?? null;
+  }
+
+  // ---------------------------------------------------------------------------
   // Inspection helpers (CLI + demo)
   // ---------------------------------------------------------------------------
 

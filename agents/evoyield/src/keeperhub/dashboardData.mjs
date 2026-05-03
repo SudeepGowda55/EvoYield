@@ -1,6 +1,7 @@
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
 import { readJson, writeJsonAtomic } from "./fs.mjs";
+import { getStorageAdapter } from "../agent/instance.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_PATH = resolve(__dirname, "../../../../apps/dashboard/public/data/latest-run.json");
@@ -129,7 +130,7 @@ export async function publishDashboardRun({ marketData, result, khResult, rebala
         },
       ];
 
-  await writeJsonAtomic(DASHBOARD_PATH, {
+  const payload = {
     ...existing,
     generatedAt: new Date().toISOString(),
     agent: agentName,
@@ -170,5 +171,21 @@ export async function publishDashboardRun({ marketData, result, khResult, rebala
       executableProtocols,
     },
     history: nextHistory,
-  });
+  };
+
+  // 1. Write local file (serves as build-time seed + backup)
+  await writeJsonAtomic(DASHBOARD_PATH, payload);
+
+  // 2. Upload to 0G Storage — rootHash is saved in .evoframe-cache.json hashIndex
+  //    under the key "dashboard:latest". No contract changes needed.
+  //    GET /dashboard fetches from 0G first, falls back to local file.
+  const storage = getStorageAdapter();
+  if (storage) {
+    try {
+      await storage.storeBlob("dashboard:latest", JSON.stringify(payload));
+    } catch (err) {
+      // best-effort — local file is always the fallback
+      console.warn(`  ⚠️  Dashboard 0G upload failed: ${err?.message ?? err}`);
+    }
+  }
 }

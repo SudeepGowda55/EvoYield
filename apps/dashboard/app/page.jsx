@@ -98,12 +98,14 @@ export default function Dashboard() {
 
     async function refresh() {
       try {
-        const res = await fetch(`/data/latest-run.json?ts=${Date.now()}`, { cache: "no-store" });
+        // /api/dashboard is proxied by Next.js to the agent server (GET /dashboard).
+        // Falls back silently to the seeded snapshot if the agent is unreachable.
+        const res = await fetch(`/api/dashboard?ts=${Date.now()}`, { cache: "no-store" });
         if (!res.ok) return;
         const next = await res.json();
         if (!cancelled) setData(next);
       } catch {
-        // Keep the seeded snapshot visible if the browser cannot refresh the JSON.
+        // Keep the seeded snapshot visible if the agent server is unreachable.
       }
     }
 
