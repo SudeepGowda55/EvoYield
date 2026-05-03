@@ -75,8 +75,13 @@ app.post("/regenerate", async (req, res) => {
   try {
     const evolved = await forceRegenerate(reason ?? "KeeperHub regeneration trigger");
     if (!evolved) {
+      console.log("[/regenerate] completed — no candidate passed fitness threshold");
       return res.json({ regenerated: false, message: "no candidate passed fitness threshold" });
     }
+    console.log(
+      `[/regenerate] completed — promoted gen-${evolved.generation} ` +
+      `fitness=${evolved.fitnessScore} skill=${evolved.id}`,
+    );
     res.json({
       regenerated:  true,
       newSkillId:   evolved.id,

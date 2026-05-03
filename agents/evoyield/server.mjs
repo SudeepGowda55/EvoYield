@@ -19,6 +19,7 @@ await initAgent();
 app.listen(PORT, () => {
   console.log(`\n🚀 EvoYield API → http://localhost:${PORT}`);
   console.log("   POST /evaluate  { aave_apy, morpho_apy, yearn_apy, sky_apy }");
+  console.log("   POST /regenerate { reason?, fitnessScore?, generation? }");
   console.log("   GET  /status    — current strategy generation + fitness");
   console.log("   GET  /health    — liveness check\n");
   console.log("   Expose publicly with: npx ngrok http 3001");
