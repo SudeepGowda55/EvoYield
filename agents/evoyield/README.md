@@ -1,175 +1,223 @@
-# EvoYield Agent
+# EvoYield
 
-**Self-evolving DeFi yield optimizer powered by EvoFrame (0G Compute) + KeeperHub**
+**Self-evolving DeFi yield optimizer powered by EvoFrame (0G Compute + Storage + Chain) + KeeperHub**
 
-ETHGlobal Open Agents 2026 — Dual-track submission
+> ETHGlobal Open Agents 2026 — **0G Track** ($7,500) · **KeeperHub Track** ($4,500)
 
-- **0G Track** — $7,500 prize pool
-- **KeeperHub Track** — $4,500 prize pool
+**Live dashboard:** [evoyield.vercel.app](https://evoyield.vercel.app) · **Repository:** [github.com/SudeepGowda55/EvoYield](https://github.com/SudeepGowda55/EvoYield)
 
 ---
 
 ## What is EvoYield?
 
-EvoYield is an autonomous DeFi agent that continuously improves its own yield allocation strategy using evolutionary AI on 0G's decentralized compute network. When market APYs shift, EvoYield doesn't just react — it evolves.
+EvoYield is an autonomous DeFi agent that continuously improves its own yield allocation strategy using evolutionary AI on 0G's decentralised compute network. It doesn't just react to market shifts — it **evolves its own code** to handle them better.
 
-### The Core Loop
+Every 6 hours, EvoYield fetches live APYs from DefiLlama, runs the evolved strategy to compute an optimal allocation, and triggers a KeeperHub workflow to execute real on-chain rebalances across Aave V3, Morpho Blue, Yearn V3, and Sky. If performance degrades, the agent triggers a new evolution cycle via 0G Compute and auto-deploys a fresh KeeperHub workflow for the promoted generation.
+
+| Typical Yield Aggregator | EvoYield |
+|---|---|
+| Hard-coded rebalancing rules | AI-generated strategy code that evolves over time |
+| Same logic forever | Each generation improves through benchmark-driven selection |
+| Centralised compute | Runs on 0G's decentralised compute network |
+| Manual triggers | Fully automated via KeeperHub — every 6 hours |
+| Static workflow | KeeperHub workflow auto-regenerated on every evolution |
+
+**In production:** 60.1 USDC test pool · 24 KeeperHub rebalances · +12.10 pts estimated APY lift across all rebalances.
+
+---
+
+## The Core Loop
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        EVERY CYCLE                              │
-│                                                                 │
-│  DefiLlama API                                                  │
-│  (Live APYs) ──► EvoFrame / 0G ──► Evolved Strategy            │
-│                  (AI rewrites &        │                        │
-│                   benchmarks code)     ▼                        │
-│                                  KeeperHub ──► Aave V3          │
-│                                  (Executes)     Morpho Blue     │
-│                                     │           Yearn V3        │
-│                                     │           Sky / Spark     │
-│                                     ▼                           │
-│                               Telegram Bot                      │
-│                               (Notifies you)                    │
+│                         EVERY 6 HOURS                           │
+│                                                                  │
+│  DefiLlama API ──► EvoFrame / 0G Compute                        │
+│  (Live APYs)        (evaluates evolved strategy)                │
+│                              │                                  │
+│              fitnessScore < 75? ──► POST /regenerate            │
+│                              │      (0G Compute evolves code)   │
+│                              ▼                                  │
+│                       KeeperHub ──► Aave V3                     │
+│                       (Executes       Morpho Blue               │
+│                       on-chain)       Yearn V3                  │
+│                              │        Sky / Spark               │
+│                              ▼                                  │
+│                     0G Storage ──► Dashboard                    │
+│                     (audit blob)    (evoyield.vercel.app)       │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### What Makes It Different
-
-| Typical Yield Aggregator     | EvoYield                                          |
-| ---------------------------- | ------------------------------------------------- |
-| Hard-coded rebalancing rules | AI-generated strategy code that evolves over time |
-| Same logic forever           | Each evolution cycle improves the strategy        |
-| Centralized compute          | Runs on 0G's decentralized compute network        |
-| Manual triggers              | Fully automated via KeeperHub keeper network      |
-
 ---
 
-## Architecture
+## EvoFrame — How the Strategy Evolves
 
-```
-open-agents/                          ← Root monorepo (submit this)
-├── packages/                         ← EvoFrame framework packages
-│   ├── core/                         ← @evoframe/core
-│   ├── 0g-adapter/                   ← @evoframe/0g-adapter
-│   ├── skill-registry/               ← @evoframe/skill-registry
-│   └── cli/                          ← @evoframe/cli
-├── agents/
-│   └── evoyield/                     ← This agent (you are here)
-│       ├── src/
-│   ├── agent/
-│   │   ├── EvoYieldAgent.mjs   ← Agent class (extends EvoAgent from EvoFrame)
-│   │   ├── benchmarks.mjs      ← What "good" means (4 test cases the strategy must pass)
-│   │   ├── hint.mjs            ← Instructions fed to 0G AI when evolving
-│   │   └── instance.mjs        ← Singleton agent shared across server + cycle
-│   ├── server/
-│   │   └── app.mjs             ← Express HTTP server (/evaluate, /status, /health)
-│   └── keeperhub/
-│       ├── client.mjs          ← KeeperHub REST API base client
-│       ├── apy.mjs             ← Live APY fetcher from DefiLlama (no API key needed)
-│       ├── rebalance.mjs       ← Triggers KeeperHub rebalance workflow via webhook
-│       ├── notify.mjs          ← Telegram Bot API notifications
-│       └── cycle.mjs           ← Orchestrates the full pipeline
-│       ├── agent.mjs                   ← Entry: test the agent with sample scenarios
-│       ├── server.mjs                  ← Entry: start the HTTP API server
-│       ├── keeperhub.mjs               ← Entry: run one full rebalance cycle
-│       ├── .env.example                ← Template for all environment variables
-│       └── .evoframe-cache.json        ← Local skill registry cache (auto-generated)
-├── examples/
-│   └── research-evolver/             ← Example agent
-└── contracts/
-    ├── SkillRegistry.sol
-    └── SkillToken.sol
-```
-
----
-
-## How EvoFrame Works
-
-EvoFrame is the evolutionary AI framework built for this hackathon. It treats agent strategy as **living code** that improves itself.
+EvoYield is built on EvoFrame, a self-evolving agent framework. The allocation strategy is a **SkillGenome**: a versioned, fitness-scored, lineage-tracked piece of executable JS code stored on 0G Storage.
 
 ### Evolution Lifecycle
 
 ```
-Genesis Skill (naive equal split: 25/25/25/25)
+Genesis Skill (naive 25/25/25/25 equal split)
         │
         ▼
-   Run Benchmarks
+Run 4 benchmark tests
         │
-   fitness < threshold (60)?
-        │
-        ▼
-   Ask 0G AI to rewrite the skill (using evolveHint)
+fitness < threshold?
         │
         ▼
-   Run Benchmarks on new candidate
-        │
-   fitness >= threshold?
+0G Compute rewrites the skill code
         │
         ▼
-   Promote new skill (replace active strategy)
+Run benchmarks on the candidate
+        │
+fitness ≥ 75?  →  Promote: register on 0G Chain, store on 0G Storage
         │
         ▼
-   Cache in .evoframe-cache.json (persists across runs)
+KeeperHub workflow auto-synthesised for the new generation
 ```
 
-### Benchmarks (what the strategy is tested against)
+### Benchmarks
 
-| Benchmark ID                | Test Input                  | Pass Condition                 |
-| --------------------------- | --------------------------- | ------------------------------ |
-| `morpho-leads-when-highest` | Morpho APY = 7.8% (highest) | `morpho >= 40%`                |
-| `aave-leads-when-highest`   | Aave APY = 8.5% (highest)   | `aave >= 40%`                  |
-| `yearn-leads-when-highest`  | Yearn APY = 9.2% (highest)  | `yearn >= 40%`                 |
-| `allocations-sum-to-100`    | Balanced market             | `aave+morpho+yearn+sky == 100` |
+| Benchmark | Input | Pass Condition |
+|---|---|---|
+| `morpho-leads-when-highest` | Morpho APY = 7.8% (highest) | `morpho ≥ 40%` |
+| `aave-leads-when-highest` | Aave APY = 8.5% (highest) | `aave ≥ 40%` |
+| `yearn-leads-when-highest` | Yearn APY = 9.2% (highest) | `yearn ≥ 40%` |
+| `allocations-sum-to-100` | Any market | `aave + morpho + yearn + sky == 100` |
 
-A candidate must pass all 4 benchmarks (fitness = 100) to be promoted.
+Fitness = average score across all benchmarks (0 or 100 each). The agent is currently at **generation 11, fitness 100** — all benchmarks passing.
 
-### The Evolved Strategy (gen-1, fitness=100)
+### What the Evolved Strategy Looks Like
 
-The 0G AI generated this allocation logic — it's the actual code stored and executed:
+Starting from a naive equal split (gen-0), 0G Compute evolved this allocation logic by generation 1:
 
 ```js
 // Sort protocols by APY descending
-// Assign fixed weights: rank-1 → 50%, rank-2 → 30%, rank-3 → 15%, rank-4 → 5%
-// Total always = 100
+// Assign: rank-1 → 50%, rank-2 → 30%, rank-3 → 15%, rank-4 → 5%
+// Handles edge cases: NaN APYs, zero-APY protocols, variable pool sizes
+// Total always sums to 100
 ```
 
-Example outputs with real market data (today, Apr 29 2026):
-
-- Aave 3.97%, Yearn 3.49%, Morpho 3.03%, Sky 0% → `Aave 50%, Yearn 30%, Morpho 15%, Sky 5%`
+Live example (May 3 2026 — Yearn 3.69%, Aave 3.43%, Morpho 3.39%, Sky 0%):
+```
+→ Yearn 50%  Aave 30%  Morpho 15%  Sky 5%
+```
 
 ---
 
-## Live Data Sources
+## KeeperHub Integration
 
-### DefiLlama Yields API
+EvoYield has one of the deepest possible KeeperHub integrations: the agent does not just *call* KeeperHub — it **auto-generates, deploys, live-patches, and listens back from** KeeperHub workflows at runtime.
 
-- URL: `https://yields.llama.fi/pools`
-- No API key required
-- Cached for 5 minutes in-memory
-- Picks the highest-TVL pool per protocol for stability
+### 1. Genome-to-Keeper Auto-Synthesis
 
-Protocol mappings used:
+Every time EvoFrame promotes a new SkillGenome generation, `synthesiseWorkflow()` automatically:
+1. Builds a structured prompt describing the new strategy (generation, fitness, allocation targets, protocol contracts)
+2. Calls KeeperHub's `POST /ai/generate-workflow` to produce a full workflow definition
+3. Deploys it via `POST /workflows/create`
+4. Retires the previous generation's workflow
 
-| Protocol | Project slugs tried         | Token symbols tried |
-| -------- | --------------------------- | ------------------- |
-| Aave     | `aave-v3`, `aave-v4`        | USDC                |
-| Morpho   | `morpho-blue`, `morpho`     | USDC                |
-| Yearn    | `yearn-finance`, `yearn-v3` | USDC                |
-| Sky      | `sky`, `spark`, `maker-dsr` | USDS, DAI, USDC     |
+The agent **writes its own KeeperHub workflows** as a byproduct of evolution — no human intervention.
 
-### KeeperHub Rebalance API
+### 2. Dynamic BPS Auto-Patching
 
-- Base URL: `https://app.keeperhub.com/api`
-- Auth: `X-API-Key` header
-- Trigger: `POST /workflows/{workflowId}/webhook`
-- Payload sent: `{ allocation, marketData, generation, fitnessScore, timestamp }`
+Before triggering, `triggerRebalance()` fetches the current workflow definition, finds the `rebalanceAmountToTargets` contract write node, and updates the BPS arguments in real time to match the evolved allocation:
 
-### 0G Compute Network
+```
+aaveBps   = allocation.aave   × 100   →  e.g. 30% → 3000 BPS
+morphoBps = allocation.morpho × 100
+yearnBps  = allocation.yearn  × 100
+skyBps    = allocation.sky    × 100
 
-- Endpoint: `https://compute-network-6.integratenetwork.work`
-- Model: `qwen/qwen-2.5-7b-instruct`
-- Auth: `ZG_API_KEY` in `.env`
-- Called only when current strategy fails benchmarks (not on every cycle)
+PATCH /workflows/{id}  ← update nodes with new BPS values
+POST  /workflows/{id}/webhook  ← trigger execution
+```
+
+KeeperHub always executes the exact parameters the AI computed — not a stale hardcoded value.
+
+### 3. Bidirectional Performance Feedback Loop
+
+KeeperHub doesn't just receive from EvoYield — it **calls back**:
+
+- The AI-synthesised workflow begins with `GET /status`. If `fitnessScore < 75`, it calls `POST /regenerate` on the agent before executing any rebalance.
+- The fallback workflow code node performs the same check in-process via `fetch()`.
+- After every execution, `cycle.mjs` checks the KeeperHub result: if the workflow failed or fitness dropped below threshold, it immediately calls `forceRegenerate()` and re-synthesises a new workflow for the evolved generation.
+
+### 4. Execution Monitoring + Audit Trail
+
+`checkAndExecute.mjs` polls KeeperHub execution status until completion. Every execution ID and transaction hash is recorded in the dashboard history:
+
+```json
+{
+  "executionId": "3zr89c5pnaetaaowkd3c0",
+  "transaction": { "hash": "0xd7e97ce7d8fc38e...", "status": "success", "gasUsedUnits": "221552" }
+}
+```
+
+Full audit trail — every rebalance is traceable from KeeperHub execution ID to Sepolia tx hash, visible at [evoyield.vercel.app](https://evoyield.vercel.app).
+
+### 5. Live Numbers
+
+- **Workflow `6u8xvdzjhvnbzlu7jw74s`** — 24 on-chain rebalances executed
+- Pool: 60.1 USDC across Aave V3, Morpho Blue, Yearn V3, Sky on Sepolia
+- Estimated APY lift: **+12.10 percentage points** across all rebalances
+- Gas per rebalance: ~59k–486k units
+- Example tx: [`0xd7e97ce7...`](https://sepolia.etherscan.io/tx/0xd7e97ce7d8fc38e57660b80ed054841f43ae5e86d27d3b47263ce578bc622ab8)
+
+---
+
+## 0G Protocol Usage
+
+| 0G Component | How EvoYield Uses It |
+|---|---|
+| **0G Compute Network** | `ComputeAdapter` calls `qwen/qwen-2.5-7b-instruct` to generate mutated skill implementations. Called only when the current strategy fails fitness benchmarks. |
+| **0G Storage KV** | Every `SkillGenome` (12 generations) is stored as a versioned blob. The rootHash is returned and indexed — chain-authoritative fallback when local cache misses. |
+| **0G Storage Log** | Append-only lineage chain: each promotion appends a `lineage:<skillId>:<timestamp>` entry, creating an immutable parent→child history auditable by anyone. |
+| **0G Chain** | `SkillRegistry.sol` records every promoted skill on-chain with real tx hashes — e.g. gen-11: [`0xaab0721c...`](https://chainscan-galileo.0g.ai/tx/0xaab0721c03748b3923eeaca054115ca76463520948089e1cfa11a3fea6055510). `StorageAdapter` queries the chain as the authoritative rootHash source. |
+| **0G DA** | `DAAdapter` broadcasts a skill discovery manifest after each promotion so other EvoFrame agents can inherit the top-performing skill at startup. |
+| **0G Storage (dashboard)** | Latest rebalance data is uploaded as a `dashboard:latest` blob after every cycle. `GET /dashboard` fetches from 0G Storage first — the frontend is fully decoupled from the agent's filesystem. |
+
+---
+
+## HTTP API Reference
+
+### `GET /health`
+```json
+{ "status": "ok", "service": "EvoYield", "timestamp": "2026-05-03T..." }
+```
+
+### `GET /status`
+```json
+{ "skill": { "name": "yield-allocator", "generation": 11, "fitnessScore": 100 } }
+```
+
+### `POST /evaluate`
+
+**Request:**
+```json
+{ "aave_apy": 3.43, "morpho_apy": 3.39, "yearn_apy": 3.69, "sky_apy": 0 }
+```
+**Response:**
+```json
+{ "allocation": { "yearn": 50, "aave": 30, "morpho": 15, "sky": 5 }, "generation": 11, "fitnessScore": 100 }
+```
+
+### `POST /regenerate`
+
+Triggers an evolution cycle. Called automatically by KeeperHub when performance degrades.
+
+**Request:**
+```json
+{ "reason": "KeeperHub detected low fitness (55/100)", "fitnessScore": 55, "generation": 11 }
+```
+**Response:**
+```json
+{ "regenerated": true, "generation": 12, "fitnessScore": 100 }
+```
+
+### `GET /dashboard`
+
+Returns the latest rebalance run data fetched from 0G Storage (local file fallback). Consumed by [evoyield.vercel.app](https://evoyield.vercel.app) via Next.js rewrite proxy.
 
 ---
 
@@ -178,385 +226,147 @@ Protocol mappings used:
 ### Prerequisites
 
 - Node.js v22+
-- The `open-agents` monorepo (this repo — EvoFrame packages are in `packages/`)
-- A 0G API key
 
-### 1. Install dependencies
-
-From the **monorepo root**:
+### 1. Install
 
 ```bash
-cd open-agents
+git clone https://github.com/SudeepGowda55/EvoYield
+cd EvoYield
 npm install
 ```
 
-This wires all `@evoframe/*` packages as workspace symlinks — no tarballs needed.
-
-### 2. Configure environment
+### 2. Configure
 
 ```bash
 cd agents/evoyield
 cp .env.example .env
+# Fill in 0G, KeeperHub, Sepolia, and Discord values
 ```
 
-Edit `.env` and fill in your values (see [Environment Variables](#environment-variables) section below).
-
-### 3. Run the agent test
+### 3. Test the agent
 
 ```bash
-cd agents/evoyield
 node agent.mjs
 ```
 
-This tests 4 market scenarios and prints the evolved allocation for each.
+Runs 4 market scenarios and prints the evolved allocation for each.
 
-### 4. Start the HTTP server
+### 4. Start the server
 
 ```bash
-cd agents/evoyield
-npm start
-# or
 node server.mjs
 ```
 
-Server runs on `http://localhost:3001` (configurable via `PORT` in `.env`).
+Starts on `http://localhost:3001`. Runs a KeeperHub cycle automatically every 6 hours.
 
-### 5. Run a full KeeperHub cycle
+### 5. Run a manual cycle
 
 ```bash
-cd agents/evoyield
 node keeperhub.mjs
 ```
 
-Fetches real APYs → gets evolved allocation → triggers KeeperHub → sends Telegram.
+One full cycle: live APYs → evolved allocation → KeeperHub rebalance → 0G Storage dashboard update.
 
 ---
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and fill in:
-
 ```env
-# ── 0G Compute (YOUR side) ─────────────────────────────────────────
+# ── 0G Network ──────────────────────────────────────────────────
+ZG_PRIVATE_KEY=0x...
+ZG_CHAIN_RPC=https://evmrpc-testnet.0g.ai
+ZG_STORAGE_RPC=https://indexer-storage-testnet-turbo.0g.ai
+ZG_API_KEY=...
+SKILL_REGISTRY_ADDRESS=0x3fE1dcaf1126c62f21FD28fF030D5D8B0e1f17d1
 COMPUTE_ENDPOINT=https://compute-network-6.integratenetwork.work
-ZG_API_KEY=your-0g-api-key-here          # Get from 0G dashboard
-COMPUTE_MODE=live                         # Use "local" to skip 0G calls (offline testing)
+COMPUTE_MODE=live
 EVOLUTION_MODEL=qwen/qwen-2.5-7b-instruct
 
-# ── HTTP Server ─────────────────────────────────────────────────────
+# ── Server ───────────────────────────────────────────────────────
 PORT=3001
+EVOYIELD_PUBLIC_URL=https://your-deployed-backend-url.com
 
-# ── KeeperHub (FRIEND's side) ───────────────────────────────────────
-KEEPERHUB_API_KEY=kh_your_key_here       # https://app.keeperhub.com/settings/api-keys
-KH_REBALANCE_WORKFLOW_ID=wf_your_id     # Friend creates this in KeeperHub UI
+# ── KeeperHub ────────────────────────────────────────────────────
+KEEPERHUB_API_KEY=kh_...
+KH_WEBHOOK_KEY=wfb_...
+KH_REBALANCE_WORKFLOW_ID=6u8xvdzjhvnbzlu7jw74s
+KH_WEBHOOK_URL=https://app.keeperhub.com/api/workflows/6u8xvdzjhvnbzlu7jw74s/webhook
+KH_WAIT_FOR_WORKFLOW=true
+KH_WORKFLOW_WAIT_MS=60000
 
-# ── Telegram Notifications (optional but recommended for demo) ──────
-TELEGRAM_BOT_TOKEN=your_bot_token        # From @BotFather
-TELEGRAM_CHAT_ID=your_chat_id            # Your Telegram user/group ID
+# ── Sepolia Contracts ────────────────────────────────────────────
+EVOYIELD_REBALANCER_ADDRESS=0xcaD4CE47becA13D10F885E0e78714c21FD6c1165
+EVOYIELD_AAVE_VAULT=0x02b5e71D8C0D1e0C76EF66A7bA6bB58201363BB3
+EVOYIELD_MORPHO_VAULT=0x0e2bb0C5802A1dDd4D56AB89bfC7f20732D91B5c
+EVOYIELD_YEARN_VAULT=0x24BF9F1c089b0374e3bDFA0Ed3c6D6C815D9C816
+EVOYIELD_SKY_VAULT=0xc0468ee91158e409814de57a7918217B30589a70
+
+# ── Notifications ────────────────────────────────────────────────
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 ```
-
----
-
-## HTTP API Reference
-
-### `GET /health`
-
-Liveness check. Returns immediately.
-
-```json
-{ "status": "ok", "service": "EvoYield", "timestamp": "2026-04-29T..." }
-```
-
-### `GET /status`
-
-Returns the current active strategy's generation and fitness score.
-
-```json
-{
-  "skill": {
-    "name": "yield-allocator",
-    "generation": 1,
-    "fitnessScore": 100,
-    "version": "2.0.0",
-    "status": "active"
-  }
-}
-```
-
-### `POST /evaluate`
-
-Main endpoint. KeeperHub or any caller sends current APYs, gets back the evolved allocation.
-
-**Request body:**
-
-```json
-{
-  "aave_apy": 3.97,
-  "morpho_apy": 3.03,
-  "yearn_apy": 3.49,
-  "sky_apy": 0
-}
-```
-
-**Response:**
-
-```json
-{
-  "allocation": { "aave": 50, "yearn": 30, "morpho": 15, "sky": 5 },
-  "generation": 1,
-  "fitnessScore": 100
-}
-```
-
----
-
-## Telegram Setup (5 minutes)
-
-1. Open Telegram → search `@BotFather` → send `/newbot`
-2. Follow prompts → copy the **bot token** → paste as `TELEGRAM_BOT_TOKEN` in `.env`
-3. Start a chat with your new bot (click Start)
-4. Visit `https://api.telegram.org/bot{YOUR_TOKEN}/getUpdates` in a browser
-5. Find `"chat": { "id": 123456789 }` — paste that as `TELEGRAM_CHAT_ID` in `.env`
-
----
-
-## KeeperHub Setup (Friend's Task)
-
-This is what the other teammate needs to build in the KeeperHub UI:
-
-### Step 1: Get API Key
-
-Go to [app.keeperhub.com/settings/api-keys](https://app.keeperhub.com/settings/api-keys) → create a key → paste as `KEEPERHUB_API_KEY` in `.env`.
-
-### Step 2: Create the Rebalance Workflow
-
-Create a new workflow with **Webhook** as the trigger. The webhook payload it receives is:
-
-```json
-{
-  "allocation": { "aave": 50, "yearn": 30, "morpho": 15, "sky": 5 },
-  "marketData": { "aave_apy": 3.97, "morpho_apy": 3.03, "yearn_apy": 3.49, "sky_apy": 0 },
-  "generation": 1,
-  "fitnessScore": 100,
-  "timestamp": "2026-04-29T..."
-}
-```
-
-### Step 3: Build the Workflow Nodes
-
-Recommended node sequence:
-
-| Step | Node type         | Action                                                 |
-| ---- | ----------------- | ------------------------------------------------------ |
-| 1    | Trigger           | Webhook (auto-created when you pick this trigger)      |
-| 2    | Read balances     | Call Aave V3, Morpho, Yearn, Sky balance APIs          |
-| 3    | Calculate delta   | Compare current % vs target `allocation` from payload  |
-| 4    | Withdraw          | Withdraw excess from over-allocated protocols          |
-| 5    | Approve + Deposit | Approve token → deposit into under-allocated protocols |
-| 6    | Verify            | Read final balances, confirm they match target         |
-| 7    | Notify            | Send Telegram / Discord summary                        |
-
-### Step 4: Paste the Workflow ID
-
-Copy the workflow ID from KeeperHub → paste as `KH_REBALANCE_WORKFLOW_ID` in `.env`.
-
-### Step 5: Expose the Server Publicly (for KeeperHub to call back)
-
-If KeeperHub needs to call your `/evaluate` endpoint:
-
-```bash
-npx ngrok http 3001
-```
-
-Copy the public URL (e.g. `https://abc123.ngrok.io`) → set it as the HTTP call URL in your KeeperHub workflow nodes.
-
----
-
-## What's Working Right Now
-
-| Feature                   | Status     | Notes                                                           |
-| ------------------------- | ---------- | --------------------------------------------------------------- |
-| EvoFrame agent boots      | ✅ Working | Loads cached strategy on subsequent runs                        |
-| 0G AI strategy evolution  | ✅ Working | Calls `qwen/qwen-2.5-7b-instruct` on 0G network                 |
-| Benchmark evaluation      | ✅ Working | fitness=100, all 4 benchmarks passing                           |
-| DefiLlama live APY fetch  | ✅ Working | Real data: Aave 3.97%, Yearn 3.49%, Morpho 3.03%                |
-| HTTP server + REST API    | ✅ Working | `/health`, `/status`, `/evaluate` all working                   |
-| KeeperHub webhook trigger | ✅ Wired   | Sends correct payload; needs `KH_REBALANCE_WORKFLOW_ID`         |
-| Telegram notifications    | ✅ Wired   | Sends on cycle; needs `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` |
-| On-chain attestation      | ⚠️ Stubbed | `onChainTxHash: null` — 0G chain not fully connected yet        |
-
----
-
-## What Still Needs To Be Done
-
-### Your tasks (you — the 0G side)
-
-- [ ] **Telegram bot** — 5 min setup with @BotFather (see [Telegram Setup](#telegram-setup-5-minutes))
-- [ ] **Demo video** — ETHGlobal requires a video showing the working project. Record:
-  1. `node keeperhub.mjs` running and printing real APYs + allocation
-  2. The KeeperHub workflow executing the rebalance
-  3. Telegram notification arriving
-  4. Terminal showing evolution from gen-0 to gen-1 (delete `.evoframe-cache.json` and re-run `node agent.mjs`)
-- [ ] **On-chain attestation** (if 0G track requires it) — check if EvoFrame needs `onChainTxHash` set for the prize criteria. The field exists in the cache, currently null.
-- [ ] **Project description on ETHGlobal** — submit under both 0G and KeeperHub tracks. Write a paragraph for each track explaining specifically how you used their tech.
-
-### Friend's tasks (KeeperHub side)
-
-- [ ] **Get KeeperHub API key** from [app.keeperhub.com/settings/api-keys](https://app.keeperhub.com/settings/api-keys)
-- [ ] **Create rebalance workflow** in KeeperHub UI with Webhook trigger
-- [ ] **Paste workflow ID** into your `.env` as `KH_REBALANCE_WORKFLOW_ID`
-- [ ] **Test the full loop** end-to-end: run `node keeperhub.mjs` → confirm KeeperHub picks it up → confirm rebalance executes
-- [ ] (Optional) Add the EvoYield server's `/evaluate` endpoint as an HTTP step at the start of the KeeperHub workflow, so KeeperHub can fetch its own allocation
-
-### Both of you
-
-- [ ] **End-to-end live test** — run the full loop together and screenshot/record it working
-- [ ] **Hackathon submission form** — fill in project name, description, tech stack, GitHub link, demo video link, team names
-
----
-
-## Hackathon Prize Track Requirements
-
-### 0G Track ($7,500)
-
-You must demonstrate **meaningful use of 0G compute or storage**. EvoYield qualifies because:
-
-- Strategy evolution calls `qwen/qwen-2.5-7b-instruct` on the 0G compute network
-- The `ComputeAdapter` from `@evoframe/0g-adapter` handles all 0G API interaction
-- The storage layer (`StorageAdapter`) is 0G-compatible (currently in local mode)
-
-**To strengthen this**: connect real 0G storage (change `localMode: false` in `instance.mjs`) and ensure the evolved skill gets stored on 0G network.
-
-### KeeperHub Track ($4,500)
-
-You must demonstrate **an agent that uses KeeperHub for automation**. EvoYield qualifies because:
-
-- `triggerRebalance()` calls the KeeperHub workflow API
-- The rebalance workflow executes cross-protocol DeFi operations automatically
-- The cycle can be triggered on a cron schedule using KeeperHub's scheduler
-
-**To strengthen this**: add a KeeperHub schedule trigger so the cycle runs every hour automatically without any manual `node keeperhub.mjs` call.
 
 ---
 
 ## Tech Stack
 
-| Component       | Technology                                                                      |
-| --------------- | ------------------------------------------------------------------------------- |
-| Runtime         | Node.js v22, ESM modules                                                        |
+| Component | Technology |
+|---|---|
+| Runtime | Node.js v22, ES modules |
 | Agent framework | EvoFrame (`@evoframe/core`, `@evoframe/0g-adapter`, `@evoframe/skill-registry`) |
-| AI compute      | 0G Compute Network — `qwen/qwen-2.5-7b-instruct`                                |
-| APY data        | DefiLlama Yields API (free, no auth)                                            |
-| Automation      | KeeperHub workflow webhooks                                                     |
-| HTTP server     | Express.js                                                                      |
-| Notifications   | Telegram Bot API                                                                |
-| Environment     | dotenv                                                                          |
+| AI compute | 0G Compute Network — `qwen/qwen-2.5-7b-instruct` |
+| Storage | 0G Storage KV + Log |
+| On-chain registry | 0G Chain — `SkillRegistry.sol` |
+| APY data | DefiLlama Yields API (free, no auth) |
+| Execution automation | KeeperHub workflow webhooks + auto-synthesis |
+| HTTP server | Express.js |
+| Notifications | Discord Webhook |
+| Frontend | Next.js deployed on Vercel |
 
 ---
 
-## EvoFrame Package Reference
+## Contract Addresses
 
-EvoFrame packages live in `packages/` at the monorepo root. npm workspaces symlinks them into `node_modules/@evoframe/` automatically after `npm install`.
+**0G Galileo Testnet:**
 
-| Package                    | Location                   | Purpose                                                            |
-| -------------------------- | -------------------------- | ------------------------------------------------------------------ |
-| `@evoframe/core`           | `packages/core/`           | Base `EvoAgent` class, evolution engine, benchmark runner          |
-| `@evoframe/0g-adapter`     | `packages/0g-adapter/`     | `StorageAdapter` (0G storage) + `ComputeAdapter` (0G AI inference) |
-| `@evoframe/skill-registry` | `packages/skill-registry/` | `SkillRegistryAdapter` — stores/retrieves evolved skills           |
+| Contract | Address |
+|---|---|
+| SkillRegistry | [`0x3fE1dcaf1126c62f21FD28fF030D5D8B0e1f17d1`](https://chainscan-galileo.0g.ai/address/0x3fe1dcaf1126c62f21fd28ff030d5d8b0e1f17d1) |
+| SkillToken | [`0x2A22B21b15d6305AbCbe78ff3098aed2F5B54869`](https://chainscan-galileo.0g.ai/address/0x2A22B21b15d6305AbCbe78ff3098aed2F5B54869) |
 
----
+**Ethereum Sepolia:**
 
-## Running in Offline / Test Mode
+| Contract | Address |
+|---|---|
+| EvoYieldRebalancer | [`0xcaD4CE47becA13D10F885E0e78714c21FD6c1165`](https://sepolia.etherscan.io/address/0xcaD4CE47becA13D10F885E0e78714c21FD6c1165) |
+| Aave mock vault | [`0x02b5e71D8C0D1e0C76EF66A7bA6bB58201363BB3`](https://sepolia.etherscan.io/address/0x02b5e71D8C0D1e0C76EF66A7bA6bB58201363BB3) |
+| Morpho mock vault | [`0x0e2bb0C5802A1dDd4D56AB89bfC7f20732D91B5c`](https://sepolia.etherscan.io/address/0x0e2bb0C5802A1dDd4D56AB89bfC7f20732D91B5c) |
+| Yearn mock vault | [`0x24BF9F1c089b0374e3bDFA0Ed3c6D6C815D9C816`](https://sepolia.etherscan.io/address/0x24BF9F1c089b0374e3bDFA0Ed3c6D6C815D9C816) |
+| Sky mock vault | [`0xc0468ee91158e409814de57a7918217B30589a70`](https://sepolia.etherscan.io/address/0xc0468ee91158e409814de57a7918217B30589a70) |
 
-Set `COMPUTE_MODE=local` in `.env` to skip real 0G API calls. The agent will use the cached strategy from `.evoframe-cache.json` without calling out.
-
-To force re-evolution (delete cache → agent calls 0G on next run):
-
-```bash
-rm .evoframe-cache.json
-node agent.mjs
-```
-
----
-
-## Known Limitations
-
-1. **Sky APY often returns 0%** — Sky/Spark USDC pools are sometimes not listed on DefiLlama Ethereum mainnet. Sky gets 5% allocation (lowest rank) when its APY is 0.
-2. **On-chain TX hash is null** — The 0G on-chain skill registration is stubbed. The agent runs in local mode (no real chain connected).
-3. **KeeperHub workflow not built yet** — The rebalance trigger logs the payload but doesn't execute until `KH_REBALANCE_WORKFLOW_ID` is set.
-4. **Single-chain only** — Currently targets Ethereum mainnet pools only. Multi-chain support would require changes to `apy.mjs`.
-
----
-
-## File-by-File Reference
-
-### `src/agent/EvoYieldAgent.mjs`
-
-Extends `EvoAgent` from EvoFrame. Defines the genesis skill (naive 25/25/25/25 split), registers benchmarks, and sets the evolution hint. This is the brain of the project.
-
-### `src/agent/benchmarks.mjs`
-
-Four test cases the evolved strategy must pass. Each benchmark is `{ id, input, validate }`. The validate function returns 0 (fail) or 100 (pass). Average score = fitness.
-
-### `src/agent/hint.mjs`
-
-Plain English + algorithmic instructions sent to the 0G AI model. Extremely explicit to ensure the generated code is mathematically correct (allocations summing to 100).
-
-### `src/agent/instance.mjs`
-
-Singleton wrapper. Provides `initAgent()`, `evaluate(marketData)`, `getSkillInfo()`. The `_ready` guard prevents double-initialization when imported from multiple places.
-
-### `src/server/app.mjs`
-
-Express app. Three routes: `/health` (liveness), `/status` (current strategy info), `/evaluate` (main allocation endpoint). KeeperHub can call this to get decisions before executing.
-
-### `src/keeperhub/client.mjs`
-
-Base HTTP client for KeeperHub API. Adds `X-API-Key` auth header automatically. Used by `rebalance.mjs`.
-
-### `src/keeperhub/apy.mjs`
-
-Fetches real APY data from DefiLlama. 5-minute cache. Picks highest-TVL pool per protocol. Returns `{ aave_apy, morpho_apy, yearn_apy, sky_apy }`.
-
-### `src/keeperhub/rebalance.mjs`
-
-Calls `POST /workflows/{workflowId}/webhook` on KeeperHub. Sends the evolved allocation + market data. If `KH_REBALANCE_WORKFLOW_ID` is not set, logs the payload instead of crashing.
-
-### `src/keeperhub/notify.mjs`
-
-Sends a formatted HTML message to Telegram. Silently skips if bot token/chat ID not configured. Message includes APYs, allocation percentages, strategy generation, and KeeperHub status.
-
-### `src/keeperhub/cycle.mjs`
-
-Orchestrates the full pipeline. Calls each module in sequence: `initAgent → fetchApyData → evaluate → triggerRebalance → sendTelegram`. Returns the combined result object.
-
-### `agent.mjs` (root)
-
-Thin entry point. Loads `.env`, imports `initAgent` and `evaluate` from `src/agent/instance.mjs`, runs 4 test scenarios, prints results.
-
-### `server.mjs` (root)
-
-Thin entry point. Loads `.env`, imports `app` from `src/server/app.mjs`, starts listening on `PORT`.
-
-### `keeperhub.mjs` (root)
-
-Thin entry point. Loads `.env`, imports `runCycle` from `src/keeperhub/cycle.mjs`, runs one cycle.
+> Sepolia mock vaults are used because Aave/Morpho/Yearn/Sky do not all expose consistent USDC testnet vaults on a single network. The `EvoYieldRebalancer` contract and all four vault contracts are deployed and functional on Sepolia.
 
 ---
 
 ## Team
 
-| Track           | Contributor | Responsibility                                                                                    |
-| --------------- | ----------- | ------------------------------------------------------------------------------------------------- |
-| 0G Track        | You         | EvoFrame agent, 0G compute integration, evolution strategy, HTTP server, DefiLlama integration    |
-| KeeperHub Track | Friend      | KeeperHub workflow design, rebalance execution nodes, Aave/Morpho/Yearn/Sky protocol interactions |
+| Name | Telegram | X |
+|---|---|---|
+| Sudeep Gowda | [@sudeepgowda55](https://t.me/sudeepgowda55) | [@SudeepdGowda](https://x.com/SudeepdGowda) |
+| Vishruth VS | — | [@SVishruth](https://x.com/SVishruth) |
+| Manvith Y Shetty | — | — |
 
 ---
 
 ## Links
 
-- ETHGlobal Open Agents 2026: https://ethglobal.com
-- 0G Compute Network: https://0g.ai
-- KeeperHub: https://keeperhub.com
-- EvoFrame monorepo: `packages/` (this repo)
-- DefiLlama Yields API: https://yields.llama.fi/pools
+- Live dashboard: [evoyield.vercel.app](https://evoyield.vercel.app)
+- GitHub: [github.com/SudeepGowda55/EvoYield](https://github.com/SudeepGowda55/EvoYield)
+- 0G Network: [0g.ai](https://0g.ai)
+- KeeperHub: [keeperhub.com](https://keeperhub.com)
+- ETHGlobal Open Agents 2026: [ethglobal.com/events/agents](https://ethglobal.com/events/agents)
+
+---
+
+## License
+
+MIT

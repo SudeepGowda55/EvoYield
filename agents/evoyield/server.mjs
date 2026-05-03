@@ -43,7 +43,4 @@ app.listen(PORT, () => {
   console.log("   GET  /status     — current strategy generation + fitness");
   console.log("   GET  /health     — liveness check\n");
   console.log(`   ⏰ KeeperHub cycle: every ${CYCLE_HOURS}h\n`);
-  console.log("   Expose publicly with: npx ngrok http 3001");
-  console.log("   Then set EVOYIELD_PUBLIC_URL in KeeperHub workflow.");
-  console.log("   And set AGENT_URL in apps/dashboard/.env.local.\n");
 });

@@ -26,6 +26,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_JSON = resolve(__dirname, "../../../../apps/dashboard/public/data/latest-run.json");
 
 export const app = express();
+app.set("trust proxy", 1); // EC2 sits behind Nginx reverse proxy
 app.use(express.json({ limit: "1mb" }));
 
 // Allow the dashboard frontend (any origin) to call this API directly.
