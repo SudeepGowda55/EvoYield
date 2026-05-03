@@ -243,10 +243,6 @@ export async function triggerRebalance({
     if (res.ok) {
       return confirmExecution(json, { workflowId: id, source: "direct-webhook-url", wait });
     }
-    console.warn(
-      `\n⚠️  Direct KeeperHub webhook URL failed (${res.status}); ` +
-        `falling back to /workflows/${id}/webhook...`,
-    );
   }
 
   const path = via === "execute" ? PATHS.execute(id) : PATHS.webhook(id);

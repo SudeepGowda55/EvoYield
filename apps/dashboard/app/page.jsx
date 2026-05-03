@@ -121,7 +121,9 @@ export default function Dashboard() {
   const rebalanceRows = allocationRows(data.rebalance.targetAllocation, data.rebalance.targetAmounts);
   const totalDelta = data.rebalance.deltas.reduce((sum, item) => sum + Math.abs(item.deltaUsdc), 0);
   const latestTx = data.rebalance.transaction;
-  const history = data.history ?? [];
+  const history = [...(data.history ?? [])].sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+  );
   const rebalanceHistory = history.filter((item) => item.type === "rebalance");
   const totalApyLift = rebalanceHistory.reduce((sum, item) => sum + item.expectedApyLift, 0);
   const bestApy = Math.max(...history.map((item) => item.expectedApy ?? 0));

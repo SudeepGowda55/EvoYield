@@ -182,12 +182,7 @@
       "yearn": "0x24BF9F1c089b0374e3bDFA0Ed3c6D6C815D9C816",
       "sky": "0xc0468ee91158e409814de57a7918217B30589a70"
     },
-    "executableProtocols": [
-      "aave",
-      "morpho",
-      "yearn",
-      "sky"
-    ]
+    "executableProtocols": ["aave", "morpho", "yearn", "sky"]
   },
   "history": [
     {
@@ -1964,10 +1959,5 @@
     "yearn": "0x24BF9F1c089b0374e3bDFA0Ed3c6D6C815D9C816",
     "sky": "0xc0468ee91158e409814de57a7918217B30589a70"
   },
-  "executableProtocols": [
-    "aave",
-    "morpho",
-    "yearn",
-    "sky"
-  ]
+  "executableProtocols": ["aave", "morpho", "yearn", "sky"]
 }
