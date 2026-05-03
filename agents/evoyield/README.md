@@ -2,7 +2,7 @@
 
 **Self-evolving DeFi yield optimizer powered by EvoFrame (0G Compute + Storage + Chain) + KeeperHub**
 
-> ETHGlobal Open Agents 2026 — **0G Track** ($7,500) · **KeeperHub Track** ($4,500)
+> ETHGlobal Open Agents 2026 — **0G Track** ($7,500) · **KeeperHub Track** ($4,500) · **KeeperHub Builder Feedback Bounty** ($250)
 
 **Live dashboard:** [evoyield.vercel.app](https://evoyield.vercel.app) · **Backend API:** `https://utc-dialogue-opposed-wanting.trycloudflare.com` · **Repository:** [github.com/SudeepGowda55/EvoYield](https://github.com/SudeepGowda55/EvoYield)
 
