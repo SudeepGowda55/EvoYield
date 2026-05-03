@@ -11,10 +11,29 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 require("dotenv").config({ path: resolve(__dirname, ".env") });
 
 import { app, initAgent } from "./src/server/app.mjs";
+import { runCycle }        from "./src/keeperhub/cycle.mjs";
 
-const PORT = Number(process.env.PORT ?? 3001);
+const PORT        = Number(process.env.PORT ?? 3001);
+const CYCLE_HOURS = 6;
+const CYCLE_MS    = CYCLE_HOURS * 60 * 60 * 1000;
 
 await initAgent();
+
+// ── Scheduled KeeperHub cycle ────────────────────────────────────────────────
+
+async function scheduledCycle() {
+  console.log(`\n⏰ Scheduled cycle triggered at ${new Date().toLocaleTimeString()}`);
+  try {
+    await runCycle();
+  } catch (err) {
+    console.error(`❌ Scheduled cycle failed: ${err?.message ?? err}`);
+  }
+  console.log(`⏰ Next cycle in ${CYCLE_HOURS}h (${new Date(Date.now() + CYCLE_MS).toLocaleTimeString()})`);
+}
+
+setInterval(scheduledCycle, CYCLE_MS);
+
+// ── HTTP server ──────────────────────────────────────────────────────────────
 
 app.listen(PORT, () => {
   console.log(`\n🚀 EvoYield API → http://localhost:${PORT}`);
@@ -23,6 +42,7 @@ app.listen(PORT, () => {
   console.log("   GET  /dashboard  — latest rebalance data (dashboard frontend)");
   console.log("   GET  /status     — current strategy generation + fitness");
   console.log("   GET  /health     — liveness check\n");
+  console.log(`   ⏰ KeeperHub cycle: every ${CYCLE_HOURS}h\n`);
   console.log("   Expose publicly with: npx ngrok http 3001");
   console.log("   Then set EVOYIELD_PUBLIC_URL in KeeperHub workflow.");
   console.log("   And set AGENT_URL in apps/dashboard/.env.local.\n");
