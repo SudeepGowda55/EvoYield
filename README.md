@@ -1,24 +1,22 @@
-# EvoFrame — Self-Evolving Agent Framework on 0G
+# EvoYield — Self-Evolving DeFi Agent on 0G + KeeperHub
 
-> ETHGlobal Open Agents 2026 · **0G Track — Best Agent Framework, Tooling & Core Extensions**
+> ETHGlobal Open Agents 2026 · **KeeperHub Track** · **0G Track — Best Agent Framework** · **KeeperHub Builder Feedback Bounty**
 
-EvoFrame is a framework where **skills are living artifacts** — not hardcoded at build time, but autonomously evolved at runtime. When an agent underperforms, EvoFrame triggers a mutation cycle via **0G Compute**, evaluates candidates in a sandboxed fitness runner, promotes the winner, and persists the full genetic lineage to **0G Storage**. Every promoted skill is registered on **0G Chain**. Skills spread across agents via **cross-agent pollination over 0G DA**.
+EvoYield is a self-evolving DeFi yield optimizer built on **EvoFrame** — an open-source agent framework where strategy code is not written by developers but autonomously evolved at runtime. When an agent underperforms, EvoFrame mutates its strategy code using **0G Compute**, benchmarks candidates in a sandboxed VM, promotes the winner to **0G Storage + Chain**, and automatically synthesises a brand new **KeeperHub workflow** to execute the updated strategy on-chain. KeeperHub is not just a consumer — it calls back to the agent when performance degrades, closing the loop entirely. The entire cycle — evolve, deploy workflow, patch, trigger, feedback — runs without any human intervention.
 
 ---
 
 ## Submission Snapshot
 
-**Project:** EvoFrame — Self-Evolving Agent Framework on 0G
-
-**Description:** Agents package their behaviour as `SkillGenome` artifacts, use 0G Compute to generate improved mutations, benchmark candidates locally, persist lineage to 0G Storage, and register promoted skills on 0G Chain. EvoYield is the live DeFi example agent built with the framework.
+**Project:** EvoYield — Self-Evolving DeFi Agent on 0G + KeeperHub
 
 **Repository:** [github.com/SudeepGowda55/EvoYield](https://github.com/SudeepGowda55/EvoYield)
 
-**Live demo:** [evoyield.vercel.app](https://evoyield.vercel.app) — 60.1 USDC pool · 24 KeeperHub rebalances · +12.10 pts estimated APY lift
+**Live dashboard:** [evoyield.vercel.app](https://evoyield.vercel.app) — 60.1 USDC pool · 24 KeeperHub rebalances · +12.10 pts estimated APY lift
 
 **Backend API:** `https://utc-dialogue-opposed-wanting.trycloudflare.com`
 
-**Working example agent:** [`agents/evoyield`](agents/evoyield) — evolves a DeFi yield-allocation strategy and triggers KeeperHub to rebalance a Sepolia USDC vault pool.
+**Agent source:** [`agents/evoyield/src/agent`](https://github.com/SudeepGowda55/EvoYield/tree/main/agents/evoyield/src/agent) — full implementation of the evolution loop, 0G adapter calls, KeeperHub workflow synthesis, and bidirectional feedback.
 
 **0G Galileo contracts:**
 
@@ -41,24 +39,28 @@ EvoFrame is a framework where **skills are living artifacts** — not hardcoded 
 
 ## The Problem
 
-Every existing agent framework — OpenClaw, LangGraph, CrewAI, ElizaOS — is **static**. Skills are written by developers, deployed once, and never improve without manual intervention. This is the fundamental bottleneck for long-running autonomous agents operating in dynamic environments.
+Every existing agent framework — OpenClaw, LangGraph, CrewAI, ElizaOS — is **static**. Skills are written by developers, deployed once, and never improve without manual intervention. Automation platforms like KeeperHub are powerful executors, but they run workflows that humans designed — they don't adapt when market conditions change or when the strategy stops performing.
 
-## The Solution
+EvoFrame solves both sides at once: the agent autonomously evolves its strategy using 0G Compute, and KeeperHub executes the result on-chain — with the workflow itself auto-generated and deployed after every evolution cycle. When KeeperHub detects underperformance, it calls the agent's `/regenerate` endpoint directly, triggering a new evolution. Neither side is passive.
 
-EvoFrame treats each agent skill as a **SkillGenome**: a versioned, fitness-scored, lineage-tracked unit of executable logic stored on 0G Storage. The evolution loop runs entirely on decentralised infrastructure:
+---
+
+## The Full Loop
 
 ```
-Underperformance detected
-        ↓
+Underperformance detected (fitness < 75)
+              ↓
 0G Compute generates mutation candidates
-        ↓
-FitnessRunner evaluates each candidate in a sandboxed VM
-        ↓
-Best candidate promoted — lineage appended to 0G Storage Log
-        ↓
-Skill registered on SkillRegistry.sol on 0G Chain
-        ↓
-Other agents inherit top skills at startup via 0G DA broadcast
+              ↓
+FitnessRunner evaluates each in a sandboxed VM
+              ↓
+Best candidate promoted → stored on 0G Storage → registered on 0G Chain
+              ↓
+KeeperHub workflow auto-synthesised for the new generation
+              ↓
+BPS values live-patched → KeeperHub triggered → on-chain rebalance executed
+              ↓
+KeeperHub calls POST /regenerate if performance degrades → loop repeats
 ```
 
 ---
@@ -66,39 +68,44 @@ Other agents inherit top skills at startup via 0G DA broadcast
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                         EvoFrame Agent                           │
-│                                                                  │
-│  ┌─────────────┐    ┌──────────────────┐    ┌────────────────┐  │
-│  │  EvoAgent   │───▶│  EvolutionEngine │───▶│  FitnessRunner │  │
-│  │  (base cls) │    │  (orchestrator)  │    │  (vm sandbox)  │  │
-│  └──────┬──────┘    └────────┬─────────┘    └────────────────┘  │
-│         │                   │                                    │
-└─────────┼───────────────────┼────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                          EvoFrame Agent                              │
+│                                                                      │
+│  ┌─────────────┐    ┌──────────────────┐    ┌────────────────────┐  │
+│  │  EvoAgent   │───▶│  EvolutionEngine │───▶│   FitnessRunner    │  │
+│  │  (base cls) │    │  (orchestrator)  │    │   (vm sandbox)     │  │
+│  └──────┬──────┘    └────────┬─────────┘    └────────────────────┘  │
+│         │                   │                                        │
+└─────────┼───────────────────┼────────────────────────────────────────┘
           │                   │
           ▼                   ▼
-┌──────────────────┐  ┌───────────────────────────────────────────┐
-│  0G Storage KV   │  │          0G Compute Network               │
-│  (SkillGenomes)  │  │  qwen/qwen-2.5-7b-instruct                │
-│  0G Storage Log  │  │  Generates mutation candidates            │
-│  (lineage chain) │  └───────────────────────────────────────────┘
+┌──────────────────┐  ┌───────────────────────────────────────────────┐
+│  0G Storage KV   │  │           0G Compute Network                  │
+│  (SkillGenomes)  │  │   qwen/qwen-2.5-7b-instruct                   │
+│  0G Storage Log  │  │   Generates mutation candidates               │
+│  (lineage chain) │  └───────────────────────────────────────────────┘
 └──────────────────┘
           │
           ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                      0G Chain (EVM)                              │
-│                                                                  │
-│  SkillRegistry.sol            SkillToken.sol (SKILL)             │
-│  ├── registerSkill()          ├── mint() on import               │
-│  ├── getTopSkills(domain)     └── ERC-20 rewards                 │
-│  └── getLineage(skillId)                                         │
-└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                       0G Chain (EVM)                                 │
+│  SkillRegistry.sol — on-chain skill provenance + SKILL token rewards │
+└──────────────────────────────────────────────────────────────────────┘
           │
           ▼
-┌──────────────────────────────────────────────────────────────────┐
-│              Cross-Agent Pollination (0G DA)                     │
-│  Agent A promotes skill → broadcast manifest → Agent B inherits  │
-└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                         KeeperHub                                    │
+│                                                                      │
+│  synthesiseWorkflow()  → AI generates workflow for new generation    │
+│  triggerRebalance()    → live-patches BPS values → webhook trigger   │
+│  POST /regenerate      ← KeeperHub calls back on low fitness         │
+│  checkAndExecute()     → polls execution → records tx hash           │
+└──────────────────────────────────────────────────────────────────────┘
+          │
+          ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│  Sepolia — EvoYieldRebalancer.sol + Aave / Morpho / Yearn / Sky      │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -112,6 +119,23 @@ Other agents inherit top skills at startup via 0G DA broadcast
 | **0G Compute Network** | `ComputeAdapter` calls `qwen/qwen-2.5-7b-instruct` to generate mutated skill code during each evolution cycle |
 | **0G Chain** | `SkillRegistry.sol` records every promoted skill on-chain. The chain is the authoritative rootHash index — `StorageAdapter` queries it as fallback when the local cache misses |
 | **0G DA** | `DAAdapter` broadcasts a skill discovery manifest so other EvoFrame agents can inherit top-performing skills at startup |
+
+---
+
+## KeeperHub Integration
+
+EvoYield has one of the deepest possible KeeperHub integrations — going far beyond calling a webhook. Most KeeperHub integrations are one-directional: agent → webhook → execute. EvoYield's is fully bidirectional and self-managing.
+
+| Feature | Description |
+|---|---|
+| **Workflow auto-synthesis** | After every evolution, `synthesiseWorkflow()` calls KeeperHub's AI generator with a structured prompt describing the new generation — strategy targets, contract addresses, fitness score — and deploys the returned workflow definition live |
+| **Live BPS patching** | Before every trigger, `triggerRebalance()` fetches the current workflow, patches the contract call parameters (BPS values) in the workflow nodes to match the exact evolved allocation, then fires the webhook |
+| **Bidirectional feedback loop** | The synthesised workflow calls `GET /status` on the agent before executing. If `fitnessScore < 75`, it calls `POST /regenerate` — KeeperHub drives evolution, not just executes it |
+| **Cycle-side safety net** | After every KeeperHub run, `cycle.mjs` independently checks fitness and execution result. If either fails threshold, it calls `forceRegenerate()` and re-synthesises a new workflow for the promoted generation |
+| **Full audit trail** | `checkAndExecute.mjs` polls until completion and records every KeeperHub execution ID + Sepolia tx hash in the dashboard — every rebalance is traceable end-to-end |
+| **Live numbers** | Workflow `6u8xvdzjhvnbzlu7jw74s` — 24 on-chain rebalances · +12.10 pts estimated APY lift · all visible at [evoyield.vercel.app](https://evoyield.vercel.app) |
+
+> Detailed KeeperHub integration notes, reproducible bugs found during development, and feature requests are documented in [KEEPERHUB_FEEDBACK.md](KEEPERHUB_FEEDBACK.md) — submitted for the KeeperHub Builder Feedback Bounty.
 
 ---
 
@@ -129,9 +153,10 @@ open-agents/
 │   ├── SkillToken.sol              # SKILL ERC-20 token
 │   └── EvoYieldSepoliaMocks.sol    # Remix-deployable mock vaults + rebalancer
 ├── agents/
-│   └── evoyield/           # Live DeFi agent built on EvoFrame
+│   └── evoyield/           # Live DeFi agent — see agents/evoyield/README.md
 ├── apps/
-│   └── dashboard/          # Next.js dashboard — served from 0G Storage
+│   └── dashboard/          # Next.js dashboard — data fetched from 0G Storage
+├── KEEPERHUB_FEEDBACK.md   # KeeperHub Builder Feedback Bounty submission
 └── examples/
     └── research-evolver/   # Minimal example: agent that evolves a research skill
 ```
@@ -170,15 +195,15 @@ Expected output:
 node keeperhub.mjs
 ```
 
-Fetches live APYs → evolved allocation → triggers KeeperHub → executes Sepolia rebalance → uploads dashboard data to 0G Storage.
+Fetches live APYs → runs evolved strategy → triggers KeeperHub → executes Sepolia rebalance → uploads dashboard data to 0G Storage.
 
-### 4. Start the HTTP server (with scheduled cycles)
+### 4. Start the HTTP server (scheduled cycles every 6h)
 
 ```bash
 node server.mjs
 ```
 
-Starts on `http://localhost:3001`. Runs a KeeperHub cycle every 6 hours automatically.
+Exposes `POST /evaluate`, `POST /regenerate`, `GET /status`, `GET /dashboard`, `GET /health` on port 3001.
 
 ### 5. Dashboard
 
@@ -186,7 +211,7 @@ Starts on `http://localhost:3001`. Runs a KeeperHub cycle every 6 hours automati
 cd apps/dashboard && npm install && npm run dev
 ```
 
-Set the Vercel project root to `apps/dashboard` for deployment. Live at [evoyield.vercel.app](https://evoyield.vercel.app).
+Set Vercel project root to `apps/dashboard` for deployment. Live at [evoyield.vercel.app](https://evoyield.vercel.app).
 
 ---
 
@@ -236,17 +261,6 @@ const result = await agent.run({ id: "t1", description: "Analyze data", input: {
 
 ---
 
-## CLI Reference
-
-```bash
-evo init [name]          # Scaffold a new agent project
-evo deploy               # Deploy SkillRegistry + SkillToken to 0G Chain
-evo skills list          # List all active skills
-evo skills top <domain>  # Top skills by fitness score in a domain
-```
-
----
-
 ## SkillGenome Schema
 
 ```typescript
@@ -274,6 +288,16 @@ interface SkillGenome {
 | Sudeep Gowda | [@sudeepgowda55](https://t.me/sudeepgowda55) | [@SudeepdGowda](https://x.com/SudeepdGowda) |
 | Vishruth VS | — | [@SVishruth](https://x.com/SVishruth) |
 | Manvith Y Shetty | — | [@Manvith68551707](https://x.com/Manvith68551707) |
+
+---
+
+## Links
+
+- Live dashboard: [evoyield.vercel.app](https://evoyield.vercel.app)
+- GitHub: [github.com/SudeepGowda55/EvoYield](https://github.com/SudeepGowda55/EvoYield)
+- KeeperHub feedback: [KEEPERHUB_FEEDBACK.md](KEEPERHUB_FEEDBACK.md)
+- 0G Network: [0g.ai](https://0g.ai)
+- KeeperHub: [keeperhub.com](https://keeperhub.com)
 
 ---
 
