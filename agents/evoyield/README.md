@@ -4,7 +4,7 @@
 
 > ETHGlobal Open Agents 2026 — **0G Track** ($7,500) · **KeeperHub Track** ($4,500)
 
-**Live dashboard:** [evoyield.vercel.app](https://evoyield.vercel.app) · **Repository:** [github.com/SudeepGowda55/EvoYield](https://github.com/SudeepGowda55/EvoYield)
+**Live dashboard:** [evoyield.vercel.app](https://evoyield.vercel.app) · **Backend API:** `https://utc-dialogue-opposed-wanting.trycloudflare.com` · **Repository:** [github.com/SudeepGowda55/EvoYield](https://github.com/SudeepGowda55/EvoYield)
 
 ---
 
@@ -353,7 +353,7 @@ DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 |---|---|---|
 | Sudeep Gowda | [@sudeepgowda55](https://t.me/sudeepgowda55) | [@SudeepdGowda](https://x.com/SudeepdGowda) |
 | Vishruth VS | — | [@SVishruth](https://x.com/SVishruth) |
-| Manvith Y Shetty | — | — |
+| Manvith Y Shetty | — | [@Manvith68551707](https://x.com/Manvith68551707) |
 
 ---
 

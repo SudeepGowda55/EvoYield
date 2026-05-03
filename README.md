@@ -16,6 +16,8 @@ EvoFrame is a framework where **skills are living artifacts** — not hardcoded 
 
 **Live demo:** [evoyield.vercel.app](https://evoyield.vercel.app) — 60.1 USDC pool · 24 KeeperHub rebalances · +12.10 pts estimated APY lift
 
+**Backend API:** `https://utc-dialogue-opposed-wanting.trycloudflare.com`
+
 **Working example agent:** [`agents/evoyield`](agents/evoyield) — evolves a DeFi yield-allocation strategy and triggers KeeperHub to rebalance a Sepolia USDC vault pool.
 
 **0G Galileo contracts:**
@@ -271,7 +273,7 @@ interface SkillGenome {
 |---|---|---|
 | Sudeep Gowda | [@sudeepgowda55](https://t.me/sudeepgowda55) | [@SudeepdGowda](https://x.com/SudeepdGowda) |
 | Vishruth VS | — | [@SVishruth](https://x.com/SVishruth) |
-| Manvith Y Shetty | — | — |
+| Manvith Y Shetty | — | [@Manvith68551707](https://x.com/Manvith68551707) |
 
 ---
 
