@@ -19,6 +19,8 @@ const rebalancerAddress = process.env.EVOYIELD_REBALANCER_ADDRESS ?? "0xcaD4CE47
 const poolUsdc = process.env.EVOYIELD_TEST_POOL_USDC ?? "60.1";
 const poolAssetsRaw = String(Math.round(Number(poolUsdc) * 1_000_000));
 const publicUrl = (process.env.EVOYIELD_PUBLIC_URL ?? "").replace(/\/+$/, "");
+const discordWebhookUrl = (process.env.DISCORD_WEBHOOK_URL ?? "").trim();
+const discordIntegrationId = process.env.KH_DISCORD_INTEGRATION_ID ?? "z1o7k6v6n7k5xlwjfhak5";
 const computeLabel = `Compute ${poolUsdc} USDC Vault Rebalance`;
 const protocolTargets = {
   aave: process.env.EVOYIELD_AAVE_VAULT ?? "0x02b5e71D8C0D1e0C76EF66A7bA6bB58201363BB3",
@@ -30,6 +32,37 @@ const protocolTargets = {
 if (!apiKey) throw new Error("KEEPERHUB_API_KEY is missing");
 if (!workflowId) throw new Error("KH_REBALANCE_WORKFLOW_ID is missing");
 if (!publicUrl) throw new Error("EVOYIELD_PUBLIC_URL is missing");
+if (!discordWebhookUrl) throw new Error("DISCORD_WEBHOOK_URL is missing");
+
+const statusCheckCode = `
+const STATUS_URL = ${JSON.stringify(`${publicUrl}/status`)};
+
+const resp = await fetch(STATUS_URL, {
+  method: 'GET',
+  headers: { 'Accept': 'application/json' },
+});
+
+const text = await resp.text();
+let data = {};
+try {
+  data = text ? JSON.parse(text) : {};
+} catch {
+  data = { raw: text };
+}
+
+if (!resp.ok) {
+  throw new Error('EvoYield /status failed with HTTP ' + resp.status + ': ' + text);
+}
+
+return {
+  success: true,
+  endpoint: STATUS_URL,
+  generation: data.skill?.generation,
+  fitnessScore: data.skill?.fitnessScore,
+  skill: data.skill,
+  keeperhub: data.keeperhub,
+};
+`.trim();
 
 const code = `
 const payload = {{Webhook.data}};
@@ -170,15 +203,9 @@ const nodes = [
       label: "Check Agent Strategy Status",
       description: "Calls EvoYield /status so KeeperHub records the active generation and fitness before rebalancing",
       config: {
-        actionType: "webhook/send",
-        method: "GET",
-        url: `${publicUrl}/status`,
-        payload: {
-          source: "keeperhub",
-          workflowId,
-          check: "strategy-status",
-          poolUsdc,
-        },
+        actionType: "code/run-code",
+        code: statusCheckCode,
+        timeout: 30,
       },
     },
   },
@@ -209,12 +236,33 @@ const nodes = [
       `{{@compute-usdc-rebalance:${computeLabel}.result.skyBps}}`,
     ]),
   }),
+  {
+    id: "discord-rebalance-alert",
+    type: "action",
+    position: { x: 1420, y: 0 },
+    data: {
+      type: "action",
+      label: "Send Discord Rebalance Alert",
+      description: "Posts the KeeperHub rebalance result to the EvoYield Discord channel",
+      config: {
+        actionType: "discord/send-message",
+        integrationId: discordIntegrationId,
+        discordMessage: [
+          "EvoYield KeeperHub rebalance completed",
+          `Pool: ${poolUsdc} Sepolia USDC`,
+          `Workflow: ${workflowId}`,
+          "Rebalance step: completed successfully",
+        ].join("\n"),
+      },
+    },
+  },
 ];
 
 const edges = [
   { id: "webhook-to-status", type: "animated", source: "webhook-trigger", target: "check-agent-status" },
-  { id: "webhook-to-rebalance", type: "animated", source: "webhook-trigger", target: "compute-usdc-rebalance" },
+  { id: "status-to-rebalance", type: "animated", source: "check-agent-status", target: "compute-usdc-rebalance" },
   { id: "rebalance-to-write", type: "animated", source: "compute-usdc-rebalance", target: "rebalance-vaults" },
+  { id: "write-to-discord", type: "animated", source: "rebalance-vaults", target: "discord-rebalance-alert" },
 ];
 
 const res = await fetch(`${base}/workflows/${encodeURIComponent(workflowId)}`, {

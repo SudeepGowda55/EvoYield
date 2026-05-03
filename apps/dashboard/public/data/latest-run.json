@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-03T14:36:51.586Z",
+  "generatedAt": "2026-05-03T15:18:41.892Z",
   "agent": "EvoYield-v1",
   "chain": "Ethereum Sepolia",
   "wallet": "0x06de353DDb9C102Cda81eDc8A535B88DFd1F7C08",
@@ -18,7 +18,7 @@
     "name": "EvoYield Sepolia USDC Rebalancer"
   },
   "marketData": {
-    "timestamp": "2026-05-03T14:36:51.586Z",
+    "timestamp": "2026-05-03T15:18:41.892Z",
     "aave_apy": 5.28,
     "morpho_apy": 3.54,
     "yearn_apy": 3.69,
@@ -76,111 +76,84 @@
     ]
   },
   "rebalance": {
-    "timestamp": "2026-05-03T14:36:43.749Z",
-    "executionId": "l8ni97kp5wh3ah4g73kbe",
+    "timestamp": "2026-05-03T15:18:20.391Z",
+    "executionId": "j6tvrfu2ak5hr2apz4cdi",
     "mode": "rebalance",
     "previousAllocation": {
-      "aave": 50,
-      "morpho": 15,
-      "yearn": 30,
+      "aave": 5,
+      "morpho": 5,
+      "yearn": 85,
       "sky": 5
     },
     "targetAllocation": {
       "aave": 25,
       "morpho": 25,
-      "yearn": 45,
-      "sky": 5
+      "yearn": 25,
+      "sky": 25
     },
     "previousAmounts": {
-      "aave": 30.05,
-      "morpho": 9.015,
-      "yearn": 18.03,
+      "aave": 3.005,
+      "morpho": 3.005,
+      "yearn": 51.085,
       "sky": 3.005
     },
     "targetAmounts": {
       "aave": 15.025,
       "morpho": 15.025,
-      "yearn": 27.045,
-      "sky": 3.005
+      "yearn": 15.025,
+      "sky": 15.025
     },
     "deltas": [
       {
         "protocol": "aave",
-        "previousPct": 50,
+        "previousPct": 5,
         "targetPct": 25,
-        "previousAmountUsdc": 30.05,
+        "previousAmountUsdc": 3.005,
         "targetAmountUsdc": 15.025,
-        "deltaUsdc": -15.025,
-        "action": "withdraw",
-        "transaction": {
-          "hash": "0x73226c081a18cf4c4fc9e5aaadccf562ecd5aa62de831dabe484114ca329be9b",
-          "url": "https://sepolia.etherscan.io/tx/0x73226c081a18cf4c4fc9e5aaadccf562ecd5aa62de831dabe484114ca329be9b",
-          "status": "success",
-          "gasUsedUnits": "221562",
-          "effectiveGasPrice": "100000205"
-        }
+        "deltaUsdc": 12.02,
+        "action": "deposit",
+        "transaction": null
       },
       {
         "protocol": "morpho",
-        "previousPct": 15,
+        "previousPct": 5,
         "targetPct": 25,
-        "previousAmountUsdc": 9.015,
+        "previousAmountUsdc": 3.005,
         "targetAmountUsdc": 15.025,
-        "deltaUsdc": 6.01,
+        "deltaUsdc": 12.02,
         "action": "deposit",
-        "transaction": {
-          "hash": "0x73226c081a18cf4c4fc9e5aaadccf562ecd5aa62de831dabe484114ca329be9b",
-          "url": "https://sepolia.etherscan.io/tx/0x73226c081a18cf4c4fc9e5aaadccf562ecd5aa62de831dabe484114ca329be9b",
-          "status": "success",
-          "gasUsedUnits": "221562",
-          "effectiveGasPrice": "100000205"
-        }
+        "transaction": null
       },
       {
         "protocol": "yearn",
-        "previousPct": 30,
-        "targetPct": 45,
-        "previousAmountUsdc": 18.03,
-        "targetAmountUsdc": 27.045,
-        "deltaUsdc": 9.015,
-        "action": "deposit",
-        "transaction": {
-          "hash": "0x73226c081a18cf4c4fc9e5aaadccf562ecd5aa62de831dabe484114ca329be9b",
-          "url": "https://sepolia.etherscan.io/tx/0x73226c081a18cf4c4fc9e5aaadccf562ecd5aa62de831dabe484114ca329be9b",
-          "status": "success",
-          "gasUsedUnits": "221562",
-          "effectiveGasPrice": "100000205"
-        }
+        "previousPct": 85,
+        "targetPct": 25,
+        "previousAmountUsdc": 51.085,
+        "targetAmountUsdc": 15.025,
+        "deltaUsdc": -36.06,
+        "action": "withdraw",
+        "transaction": null
       },
       {
         "protocol": "sky",
         "previousPct": 5,
-        "targetPct": 5,
+        "targetPct": 25,
         "previousAmountUsdc": 3.005,
-        "targetAmountUsdc": 3.005,
-        "deltaUsdc": 0,
-        "action": "hold",
-        "transaction": {
-          "hash": "0x73226c081a18cf4c4fc9e5aaadccf562ecd5aa62de831dabe484114ca329be9b",
-          "url": "https://sepolia.etherscan.io/tx/0x73226c081a18cf4c4fc9e5aaadccf562ecd5aa62de831dabe484114ca329be9b",
-          "status": "success",
-          "gasUsedUnits": "221562",
-          "effectiveGasPrice": "100000205"
-        }
+        "targetAmountUsdc": 15.025,
+        "deltaUsdc": 12.02,
+        "action": "deposit",
+        "transaction": null
       }
     ],
-    "transaction": {
-      "hash": "0x73226c081a18cf4c4fc9e5aaadccf562ecd5aa62de831dabe484114ca329be9b",
-      "url": "https://sepolia.etherscan.io/tx/0x73226c081a18cf4c4fc9e5aaadccf562ecd5aa62de831dabe484114ca329be9b",
-      "status": "success",
-      "gasUsedUnits": "221562",
-      "effectiveGasPrice": "100000205"
-    },
+    "transaction": null,
     "statusCheck": {
-      "checked": false,
+      "checked": true,
       "label": "Check Agent Strategy Status",
+      "status": "success",
+      "durationMs": "742",
       "generation": 11,
-      "fitnessScore": 100
+      "fitnessScore": 100,
+      "endpoint": "https://utc-dialogue-opposed-wanting.trycloudflare.com/status"
     },
     "protocolTargets": {
       "aave": "0x02b5e71D8C0D1e0C76EF66A7bA6bB58201363BB3",
@@ -2877,6 +2850,370 @@
       "expectedApy": 3.87,
       "expectedApyLift": 0,
       "summary": "Moved 15.03 USDC from aave toward morpho, yearn after 0G recomputed the allocation."
+    },
+    {
+      "label": "Gen 11 rebalance",
+      "timestamp": "2026-05-03T14:51:36.350Z",
+      "type": "rebalance",
+      "executionId": "lnq7cqbca408xf7b8z69d",
+      "previousAllocation": {
+        "aave": 25,
+        "morpho": 25,
+        "yearn": 45,
+        "sky": 5
+      },
+      "allocation": {
+        "aave": 50,
+        "morpho": 15,
+        "yearn": 30,
+        "sky": 5
+      },
+      "deltas": [
+        {
+          "protocol": "aave",
+          "previousPct": 25,
+          "targetPct": 50,
+          "previousAmountUsdc": 15.025,
+          "targetAmountUsdc": 30.05,
+          "deltaUsdc": 15.025,
+          "action": "deposit",
+          "transaction": null
+        },
+        {
+          "protocol": "morpho",
+          "previousPct": 25,
+          "targetPct": 15,
+          "previousAmountUsdc": 15.025,
+          "targetAmountUsdc": 9.015,
+          "deltaUsdc": -6.01,
+          "action": "withdraw",
+          "transaction": null
+        },
+        {
+          "protocol": "yearn",
+          "previousPct": 45,
+          "targetPct": 30,
+          "previousAmountUsdc": 27.045,
+          "targetAmountUsdc": 18.03,
+          "deltaUsdc": -9.015,
+          "action": "withdraw",
+          "transaction": null
+        },
+        {
+          "protocol": "sky",
+          "previousPct": 5,
+          "targetPct": 5,
+          "previousAmountUsdc": 3.005,
+          "targetAmountUsdc": 3.005,
+          "deltaUsdc": 0,
+          "action": "hold",
+          "transaction": null
+        }
+      ],
+      "transaction": null,
+      "statusCheck": {
+        "checked": false,
+        "label": "Check Agent Strategy Status",
+        "generation": 11,
+        "fitnessScore": 100
+      },
+      "previousExpectedApy": 3.87,
+      "expectedApy": 4.28,
+      "expectedApyLift": 0.41,
+      "summary": "Moved 15.03 USDC from morpho, yearn toward aave after 0G recomputed the allocation."
+    },
+    {
+      "label": "Gen 11 rebalance",
+      "timestamp": "2026-05-03T14:53:09.292Z",
+      "type": "rebalance",
+      "executionId": "nfx1is8yx74515zzljrqd",
+      "previousAllocation": {
+        "aave": 50,
+        "morpho": 15,
+        "yearn": 30,
+        "sky": 5
+      },
+      "allocation": {
+        "aave": 10,
+        "morpho": 10,
+        "yearn": 70,
+        "sky": 10
+      },
+      "deltas": [
+        {
+          "protocol": "aave",
+          "previousPct": 50,
+          "targetPct": 10,
+          "previousAmountUsdc": 30.05,
+          "targetAmountUsdc": 6.01,
+          "deltaUsdc": -24.04,
+          "action": "withdraw",
+          "transaction": null
+        },
+        {
+          "protocol": "morpho",
+          "previousPct": 15,
+          "targetPct": 10,
+          "previousAmountUsdc": 9.015,
+          "targetAmountUsdc": 6.01,
+          "deltaUsdc": -3.005,
+          "action": "withdraw",
+          "transaction": null
+        },
+        {
+          "protocol": "yearn",
+          "previousPct": 30,
+          "targetPct": 70,
+          "previousAmountUsdc": 18.03,
+          "targetAmountUsdc": 42.07,
+          "deltaUsdc": 24.04,
+          "action": "deposit",
+          "transaction": null
+        },
+        {
+          "protocol": "sky",
+          "previousPct": 5,
+          "targetPct": 10,
+          "previousAmountUsdc": 3.005,
+          "targetAmountUsdc": 6.01,
+          "deltaUsdc": 3.005,
+          "action": "deposit",
+          "transaction": null
+        }
+      ],
+      "transaction": null,
+      "statusCheck": {
+        "checked": false,
+        "label": "Check Agent Strategy Status",
+        "generation": 11,
+        "fitnessScore": 100
+      },
+      "previousExpectedApy": 4.28,
+      "expectedApy": 3.46,
+      "expectedApyLift": 0,
+      "summary": "Moved 24.04 USDC from aave, morpho toward yearn, sky after 0G recomputed the allocation."
+    },
+    {
+      "label": "Gen 11 rebalance",
+      "timestamp": "2026-05-03T14:57:24.154Z",
+      "type": "rebalance",
+      "executionId": "oxbia6li8pte3lgd8vumc",
+      "previousAllocation": {
+        "aave": 10,
+        "morpho": 10,
+        "yearn": 70,
+        "sky": 10
+      },
+      "allocation": {
+        "aave": 20,
+        "morpho": 20,
+        "yearn": 40,
+        "sky": 20
+      },
+      "deltas": [
+        {
+          "protocol": "aave",
+          "previousPct": 10,
+          "targetPct": 20,
+          "previousAmountUsdc": 6.01,
+          "targetAmountUsdc": 12.02,
+          "deltaUsdc": 6.01,
+          "action": "deposit",
+          "transaction": null
+        },
+        {
+          "protocol": "morpho",
+          "previousPct": 10,
+          "targetPct": 20,
+          "previousAmountUsdc": 6.01,
+          "targetAmountUsdc": 12.02,
+          "deltaUsdc": 6.01,
+          "action": "deposit",
+          "transaction": null
+        },
+        {
+          "protocol": "yearn",
+          "previousPct": 70,
+          "targetPct": 40,
+          "previousAmountUsdc": 42.07,
+          "targetAmountUsdc": 24.04,
+          "deltaUsdc": -18.03,
+          "action": "withdraw",
+          "transaction": null
+        },
+        {
+          "protocol": "sky",
+          "previousPct": 10,
+          "targetPct": 20,
+          "previousAmountUsdc": 6.01,
+          "targetAmountUsdc": 12.02,
+          "deltaUsdc": 6.01,
+          "action": "deposit",
+          "transaction": null
+        }
+      ],
+      "transaction": null,
+      "statusCheck": {
+        "checked": true,
+        "label": "Check Agent Strategy Status",
+        "status": "success",
+        "durationMs": "726",
+        "generation": 11,
+        "fitnessScore": 100,
+        "endpoint": "https://utc-dialogue-opposed-wanting.trycloudflare.com/status"
+      },
+      "previousExpectedApy": 3.46,
+      "expectedApy": 3.24,
+      "expectedApyLift": 0,
+      "summary": "Moved 18.03 USDC from yearn toward aave, morpho, sky after 0G recomputed the allocation."
+    },
+    {
+      "label": "Gen 11 rebalance",
+      "timestamp": "2026-05-03T15:05:32.858Z",
+      "type": "rebalance",
+      "executionId": "dhln56c1uecop50v3bwcp",
+      "previousAllocation": {
+        "aave": 20,
+        "morpho": 20,
+        "yearn": 40,
+        "sky": 20
+      },
+      "allocation": {
+        "aave": 5,
+        "morpho": 5,
+        "yearn": 85,
+        "sky": 5
+      },
+      "deltas": [
+        {
+          "protocol": "aave",
+          "previousPct": 20,
+          "targetPct": 5,
+          "previousAmountUsdc": 12.02,
+          "targetAmountUsdc": 3.005,
+          "deltaUsdc": -9.015,
+          "action": "withdraw",
+          "transaction": null
+        },
+        {
+          "protocol": "morpho",
+          "previousPct": 20,
+          "targetPct": 5,
+          "previousAmountUsdc": 12.02,
+          "targetAmountUsdc": 3.005,
+          "deltaUsdc": -9.015,
+          "action": "withdraw",
+          "transaction": null
+        },
+        {
+          "protocol": "yearn",
+          "previousPct": 40,
+          "targetPct": 85,
+          "previousAmountUsdc": 24.04,
+          "targetAmountUsdc": 51.085,
+          "deltaUsdc": 27.045,
+          "action": "deposit",
+          "transaction": null
+        },
+        {
+          "protocol": "sky",
+          "previousPct": 20,
+          "targetPct": 5,
+          "previousAmountUsdc": 12.02,
+          "targetAmountUsdc": 3.005,
+          "deltaUsdc": -9.015,
+          "action": "withdraw",
+          "transaction": null
+        }
+      ],
+      "transaction": null,
+      "statusCheck": {
+        "checked": true,
+        "label": "Check Agent Strategy Status",
+        "status": "success",
+        "durationMs": "935",
+        "generation": 11,
+        "fitnessScore": 100,
+        "endpoint": "https://utc-dialogue-opposed-wanting.trycloudflare.com/status"
+      },
+      "previousExpectedApy": 3.24,
+      "expectedApy": 3.58,
+      "expectedApyLift": 0.34,
+      "summary": "Moved 27.05 USDC from aave, morpho, sky toward yearn after 0G recomputed the allocation."
+    },
+    {
+      "label": "Gen 11 rebalance",
+      "timestamp": "2026-05-03T15:18:20.391Z",
+      "type": "rebalance",
+      "executionId": "j6tvrfu2ak5hr2apz4cdi",
+      "previousAllocation": {
+        "aave": 5,
+        "morpho": 5,
+        "yearn": 85,
+        "sky": 5
+      },
+      "allocation": {
+        "aave": 25,
+        "morpho": 25,
+        "yearn": 25,
+        "sky": 25
+      },
+      "deltas": [
+        {
+          "protocol": "aave",
+          "previousPct": 5,
+          "targetPct": 25,
+          "previousAmountUsdc": 3.005,
+          "targetAmountUsdc": 15.025,
+          "deltaUsdc": 12.02,
+          "action": "deposit",
+          "transaction": null
+        },
+        {
+          "protocol": "morpho",
+          "previousPct": 5,
+          "targetPct": 25,
+          "previousAmountUsdc": 3.005,
+          "targetAmountUsdc": 15.025,
+          "deltaUsdc": 12.02,
+          "action": "deposit",
+          "transaction": null
+        },
+        {
+          "protocol": "yearn",
+          "previousPct": 85,
+          "targetPct": 25,
+          "previousAmountUsdc": 51.085,
+          "targetAmountUsdc": 15.025,
+          "deltaUsdc": -36.06,
+          "action": "withdraw",
+          "transaction": null
+        },
+        {
+          "protocol": "sky",
+          "previousPct": 5,
+          "targetPct": 25,
+          "previousAmountUsdc": 3.005,
+          "targetAmountUsdc": 15.025,
+          "deltaUsdc": 12.02,
+          "action": "deposit",
+          "transaction": null
+        }
+      ],
+      "transaction": null,
+      "statusCheck": {
+        "checked": true,
+        "label": "Check Agent Strategy Status",
+        "status": "success",
+        "durationMs": "742",
+        "generation": 11,
+        "fitnessScore": 100,
+        "endpoint": "https://utc-dialogue-opposed-wanting.trycloudflare.com/status"
+      },
+      "previousExpectedApy": 3.58,
+      "expectedApy": 3.13,
+      "expectedApyLift": 0,
+      "summary": "Moved 36.06 USDC from yearn toward aave, morpho, sky after 0G recomputed the allocation."
     }
   ],
   "notes": [

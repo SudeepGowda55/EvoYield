@@ -3,16 +3,16 @@
   "currentAllocation": {
     "aave": 25,
     "morpho": 25,
-    "yearn": 45,
-    "sky": 5
+    "yearn": 25,
+    "sky": 25
   },
   "currentAmounts": {
     "aave": 15.025,
     "morpho": 15.025,
-    "yearn": 27.045,
-    "sky": 3.005
+    "yearn": 15.025,
+    "sky": 15.025
   },
   "workflowId": "6u8xvdzjhvnbzlu7jw74s",
-  "executionId": "l8ni97kp5wh3ah4g73kbe",
-  "updatedAt": "2026-05-03T14:36:51.578Z"
+  "executionId": "j6tvrfu2ak5hr2apz4cdi",
+  "updatedAt": "2026-05-03T15:18:41.868Z"
 }
