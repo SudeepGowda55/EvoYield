@@ -94,11 +94,43 @@ function buildSynthesisPrompt({ skill, agent, evaluateUrl, regenerateUrl, alloca
   ].join("\n");
 }
 
-function buildFallbackWorkflow({ skill, agent }) {
+function buildFallbackWorkflow({ skill, agent, regenerateUrl }) {
   const code = `
 const payload = {{Webhook.data}};
 const allocation = payload?.allocation ?? {};
 const marketData = payload?.marketData ?? {};
+const REGEN_THRESHOLD = 60;
+const REGENERATE_URL = ${JSON.stringify(regenerateUrl ?? "")};
+
+// Performance guard: if the agent's fitness has dropped below the minimum
+// viable threshold, call /regenerate so EvoFrame promotes a better SkillGenome
+// before executing any rebalance.  This is the KeeperHub → agent callout.
+const fitnessScore = Number(payload?.fitnessScore ?? 100);
+if (fitnessScore < REGEN_THRESHOLD && REGENERATE_URL) {
+  let regenResult = {};
+  try {
+    const rResp = await fetch(REGENERATE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        reason: \`KeeperHub workflow detected low fitness (\${fitnessScore}/100)\`,
+        fitnessScore,
+        generation: payload?.generation,
+      }),
+    });
+    regenResult = rResp.ok ? await rResp.json().catch(() => ({})) : { status: rResp.status };
+  } catch (e) {
+    regenResult = { error: e?.message ?? String(e) };
+  }
+  return {
+    success: false,
+    regenerateTriggered: true,
+    fitnessScore,
+    regenResult,
+    message: \`Fitness too low (\${fitnessScore}/100) — evolution triggered. Re-run after the next generation is promoted.\`,
+  };
+}
+
 const protocols = ["aave", "morpho", "yearn", "sky"];
 const target = Object.fromEntries(protocols.map((name) => [name, Number(allocation[name] ?? 0)]));
 const total = protocols.reduce((sum, name) => sum + target[name], 0);
@@ -222,11 +254,11 @@ export async function synthesiseWorkflow({
     aiResp = await kh.post(PATHS.aiGenerate, { prompt });
   } catch (err) {
     if (err instanceof KeeperHubError && err.status === 404) {
-      if (force) {
-        console.warn(
-          `\n⚠️  KeeperHub AI synthesis endpoint unavailable; deploying deterministic EvoYield workflow fallback.`,
-        );
-        generated = buildFallbackWorkflow({ skill, agent });
+        if (force) {
+          console.warn(
+            `\n⚠️  KeeperHub AI synthesis endpoint unavailable; deploying deterministic EvoYield workflow fallback.`,
+          );
+          generated = buildFallbackWorkflow({ skill, agent, regenerateUrl });
       } else {
       return toManualMode({ skill, agent, causeMessage: err.message });
       }

@@ -17,7 +17,7 @@ import { snapshot, recordDeployment }       from "./registry.mjs";
 import { KeeperHubError }                  from "./client.mjs";
 import { buildRebalanceContext, recordAllocationState } from "./allocationState.mjs";
 import { publishDashboardRun }             from "./dashboardData.mjs";
-import { initAgent, evaluate, getActiveSkill } from "../agent/instance.mjs";
+import { initAgent, evaluate, getActiveSkill, forceRegenerate } from "../agent/instance.mjs";
 
 function extractTransactionLink(khResult = {}) {
   const output = khResult.logs?.execution?.output ?? khResult.finalResult?.output ?? {};
@@ -155,7 +155,56 @@ export async function runCycle({ allowSynth = true, agentName = "EvoYield-v1" } 
     });
   }
 
-  // 6. Notify
+  // 6. Performance feedback loop ─────────────────────────────────────────────
+  // If KeeperHub's execution failed OR the current strategy's fitness has
+  // dropped below the minimum viable threshold, trigger an evolution cycle
+  // immediately so the next run uses an improved SkillGenome.
+  //
+  // This is the cycle-side safety net that complements the KeeperHub workflow's
+  // own /regenerate callout (built into both the AI-synthesised workflow prompt
+  // and the fallback workflow code node).
+  const REGEN_THRESHOLD = Number(process.env.REGEN_THRESHOLD ?? 75);
+  const execFailed =
+    !khResult?.triggered ||
+    ["failed", "error"].includes(String(khResult?.finalStatus ?? "").toLowerCase());
+  const fitnessTooLow = result.fitnessScore < REGEN_THRESHOLD;
+
+  if (execFailed || fitnessTooLow) {
+    const reason = execFailed
+      ? `KeeperHub execution ${khResult?.finalStatus ?? "did not trigger"}: ${khResult?.error ?? "unknown"}`
+      : `Fitness score ${result.fitnessScore} dropped below threshold (${REGEN_THRESHOLD})`;
+
+    console.log(`\n⚠️  Performance issue detected — triggering agent evolution`);
+    console.log(`   Reason: ${reason}`);
+
+    try {
+      const evolved = await forceRegenerate(reason);
+      if (evolved) {
+        console.log(
+          `\n🧬 Evolution complete — gen-${evolved.generation} (fitness=${evolved.fitnessScore}) promoted`,
+        );
+        // Re-synthesise a KeeperHub workflow for the new generation.
+        if (allowSynth && process.env.EVOYIELD_PUBLIC_URL) {
+          try {
+            const newSynth = await synthesiseWorkflow({ skill: evolved, agent: agentName });
+            console.log(
+              newSynth.skipped
+                ? `   ↳ synth skipped: ${newSynth.reason}`
+                : `   ↳ new workflow ${newSynth.workflowId} deployed for gen-${evolved.generation}`,
+            );
+          } catch (synthErr) {
+            console.warn(`   ↳ post-evolution synth failed: ${synthErr.message ?? synthErr}`);
+          }
+        }
+      } else {
+        console.log(`\n🧬 Evolution attempted — no candidate passed the fitness threshold yet`);
+      }
+    } catch (err) {
+      console.warn(`[cycle] performance-triggered evolution failed: ${err.message ?? err}`);
+    }
+  }
+
+  // 7. Notify
   const message = formatCycleMessage(marketData, result, khResult);
   if (message) {
     const out = await sendDiscord(message);
