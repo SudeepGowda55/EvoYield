@@ -1,18 +1,18 @@
 {
   "poolUsdc": 60.1,
   "currentAllocation": {
-    "aave": 30,
+    "aave": 50,
     "morpho": 15,
-    "yearn": 50,
+    "yearn": 30,
     "sky": 5
   },
   "currentAmounts": {
-    "aave": 18.03,
+    "aave": 30.05,
     "morpho": 9.015,
-    "yearn": 30.05,
+    "yearn": 18.03,
     "sky": 3.005
   },
   "workflowId": "6u8xvdzjhvnbzlu7jw74s",
-  "executionId": "gjyfpweskvl9vp8x8pm6a",
-  "updatedAt": "2026-05-03T12:47:19.919Z"
+  "executionId": "xq3tqiuz4el5gzjn8nrws",
+  "updatedAt": "2026-05-03T14:23:41.384Z"
 }

@@ -63,6 +63,35 @@ function extractTransaction(khResult = {}) {
   };
 }
 
+function extractStatusCheck(khResult = {}, result = {}) {
+  const logs = Array.isArray(khResult.logs?.logs) ? khResult.logs.logs : [];
+  const log = logs.find((item) =>
+    item?.nodeId === "check-agent-status" ||
+    /check agent strategy status/i.test(item?.nodeName ?? ""),
+  );
+
+  if (!log) {
+    return {
+      checked: false,
+      label: "Check Agent Strategy Status",
+      generation: Number(result?.generation ?? 0),
+      fitnessScore: Number(result?.fitnessScore ?? 0),
+    };
+  }
+
+  const output = log.output?.result ?? log.output?.data ?? log.output ?? {};
+  const skill = output.skill ?? output.body?.skill ?? output.data?.skill ?? {};
+  return {
+    checked: log.status === "success",
+    label: log.nodeName ?? "Check Agent Strategy Status",
+    status: log.status,
+    durationMs: log.duration ?? null,
+    generation: Number(skill.generation ?? result?.generation ?? 0),
+    fitnessScore: Number(skill.fitnessScore ?? result?.fitnessScore ?? 0),
+    endpoint: `${(process.env.EVOYIELD_PUBLIC_URL ?? "").replace(/\/+$/, "")}/status`,
+  };
+}
+
 function weightedApy(allocation, marketData = {}) {
   const normalized = normalizeAllocation(allocation);
   return Number(
@@ -94,6 +123,7 @@ export async function publishDashboardRun({ marketData, result, khResult, rebala
 
   const workflowResult = extractWorkflowResult(khResult);
   const transaction = extractTransaction(khResult);
+  const statusCheck = extractStatusCheck(khResult, result);
   const poolUsdc = Number(rebalance?.poolUsdc ?? workflowResult?.poolUsdc ?? 1);
   const targetAllocation = normalizeAllocation(workflowResult?.targetAllocation ?? result?.allocation);
   const previousAllocation = normalizeAllocation(workflowResult?.previousAllocation ?? rebalance?.previousAllocation);
@@ -123,6 +153,7 @@ export async function publishDashboardRun({ marketData, result, khResult, rebala
           allocation: targetAllocation,
           deltas: deltasWithTransactions,
           transaction,
+          statusCheck,
           previousExpectedApy,
           expectedApy: currentExpectedApy,
           expectedApyLift: Math.max(0, expectedApyLift),
@@ -167,6 +198,7 @@ export async function publishDashboardRun({ marketData, result, khResult, rebala
       targetAmounts,
       deltas: deltasWithTransactions,
       transaction,
+      statusCheck,
       protocolTargets,
       executableProtocols,
     },

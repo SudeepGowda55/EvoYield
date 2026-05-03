@@ -324,6 +324,15 @@ export default function Dashboard() {
               </div>
               <AllocationBar rows={allocationRows(item.allocation, item.amounts ?? amountsFromAllocation(item.allocation, data.asset.poolAmount))} />
               <p className="timelineSummary">{item.summary}</p>
+              {item.statusCheck && (
+                <div className="executionLine">
+                  <span>{item.statusCheck.label ?? "Strategy status check"}</span>
+                  <strong>
+                    Gen {item.statusCheck.generation} · fitness {item.statusCheck.fitnessScore}/100
+                    {item.statusCheck.checked ? " · checked" : " · not recorded"}
+                  </strong>
+                </div>
+              )}
               {item.deltas && (
                 <div className="miniDeltaGrid">
                   {item.deltas.map((delta) => (

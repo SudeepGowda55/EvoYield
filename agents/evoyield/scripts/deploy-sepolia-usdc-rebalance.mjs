@@ -18,6 +18,7 @@ const sepoliaUsdc =
 const rebalancerAddress = process.env.EVOYIELD_REBALANCER_ADDRESS ?? "0xcaD4CE47becA13D10F885E0e78714c21FD6c1165";
 const poolUsdc = process.env.EVOYIELD_TEST_POOL_USDC ?? "60.1";
 const poolAssetsRaw = String(Math.round(Number(poolUsdc) * 1_000_000));
+const publicUrl = (process.env.EVOYIELD_PUBLIC_URL ?? "").replace(/\/+$/, "");
 const computeLabel = `Compute ${poolUsdc} USDC Vault Rebalance`;
 const protocolTargets = {
   aave: process.env.EVOYIELD_AAVE_VAULT ?? "0x02b5e71D8C0D1e0C76EF66A7bA6bB58201363BB3",
@@ -28,6 +29,7 @@ const protocolTargets = {
 
 if (!apiKey) throw new Error("KEEPERHUB_API_KEY is missing");
 if (!workflowId) throw new Error("KH_REBALANCE_WORKFLOW_ID is missing");
+if (!publicUrl) throw new Error("EVOYIELD_PUBLIC_URL is missing");
 
 const code = `
 const payload = {{Webhook.data}};
@@ -160,9 +162,30 @@ const nodes = [
     },
   },
   {
-    id: "compute-usdc-rebalance",
+    id: "check-agent-status",
     type: "action",
     position: { x: 320, y: 0 },
+    data: {
+      type: "action",
+      label: "Check Agent Strategy Status",
+      description: "Calls EvoYield /status so KeeperHub records the active generation and fitness before rebalancing",
+      config: {
+        actionType: "webhook/send",
+        method: "GET",
+        url: `${publicUrl}/status`,
+        payload: {
+          source: "keeperhub",
+          workflowId,
+          check: "strategy-status",
+          poolUsdc,
+        },
+      },
+    },
+  },
+  {
+    id: "compute-usdc-rebalance",
+    type: "action",
+    position: { x: 680, y: 0 },
     data: {
       type: "action",
       label: computeLabel,
@@ -174,7 +197,7 @@ const nodes = [
     id: "rebalance-vaults",
     label: "Rebalance Mock Vaults",
     description: "Calls rebalanceAmountToTargets on the deployed EvoYieldRebalancer",
-    x: 700,
+    x: 1060,
     contractAddress: rebalancerAddress,
     functionName: "rebalanceAmountToTargets",
     abi: rebalanceAbi,
@@ -189,6 +212,7 @@ const nodes = [
 ];
 
 const edges = [
+  { id: "webhook-to-status", type: "animated", source: "webhook-trigger", target: "check-agent-status" },
   { id: "webhook-to-rebalance", type: "animated", source: "webhook-trigger", target: "compute-usdc-rebalance" },
   { id: "rebalance-to-write", type: "animated", source: "compute-usdc-rebalance", target: "rebalance-vaults" },
 ];

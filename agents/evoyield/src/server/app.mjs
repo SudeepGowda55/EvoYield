@@ -42,13 +42,16 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok", service: "EvoYield", timestamp: new Date().toISOString() });
 });
 
-// ── GET /status ─────────────────────────────────────────────────
-app.get("/status", async (_req, res) => {
+async function statusHandler(_req, res) {
   const skill = getSkillInfo();
   if (!skill) return res.status(503).json({ error: "Agent not initialized" });
   const kh = await khSnapshot().catch(() => null);
   res.json({ skill, keeperhub: kh });
-});
+}
+
+// ── /status ─────────────────────────────────────────────────────
+app.get("/status", statusHandler);
+app.post("/status", statusHandler);
 
 // ── GET /dashboard ──────────────────────────────────────────────
 // Serves the latest rebalance run data so the frontend can be deployed
